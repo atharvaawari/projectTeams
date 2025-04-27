@@ -13,6 +13,10 @@ import { ErrorCodeEnum } from "./enums/error-code.enum";
 import "./config/passport.config";
 import passport from "passport";
 import authRoutes from "./routes/auth.route";
+import userRoutes from "./routes/user.route";
+
+import isAuthenticated from "./middlewares/isAuthenticated";
+import workspaceRoute from "./routes/workspace.route";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -51,6 +55,10 @@ app.get(
 );
 
 app.use(`${BASE_PATH}/auth`, authRoutes);
+app.use(`${BASE_PATH}/user`, isAuthenticated, userRoutes);
+app.use(`${BASE_PATH}/workspace`, isAuthenticated, workspaceRoute);
+
+
 app.use(errorHandler);
 
 connectDatabase().then(() => {
