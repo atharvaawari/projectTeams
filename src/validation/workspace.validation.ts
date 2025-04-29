@@ -13,6 +13,11 @@ export const workspaceIdSchema = z
   .trim()
   .min(1, { message: "Workspace ID is required" });
 
+export const changeRoleSchema = z.object({
+  roleId: z.string().trim().min(1),
+  memberId: z.string().trim().min(1),
+})
+
 export const createWorkspaceSchema = z.object({
   name: nameSchema,
   description: descriptionSchema,
