@@ -188,7 +188,7 @@ export const updateWorkspaceByIdService = async (
 export const deleteWorkspaceByIdService = async (
   workspaceId: string,
   userId: string
-) => {
+): Promise<{ currentWorkSpace: mongoose.Types.ObjectId | null }> => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -221,10 +221,9 @@ export const deleteWorkspaceByIdService = async (
     await workspace.deleteOne({ session });
 
     await session.commitTransaction();
-
     session.endSession();
 
-    return { currentWorkspace: user.currentWorkSpace  }
+    return { currentWorkSpace: user.currentWorkSpace || null  };
 
   } catch (error) {
     await session.abortTransaction();
