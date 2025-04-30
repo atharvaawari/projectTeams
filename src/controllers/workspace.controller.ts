@@ -5,7 +5,7 @@ import { HTTPSTATUS } from "../config/http.config";
 import { changeMemberRoleService, createWorkspaceService, getAllWorkspacesUserIsMemberService, getWorkspaceAnalyticsService, getWorkspaceByIdService, getWorkspaceMemberService } from "../services/workspace.service";
 import { getMemberRoleInWorkspace } from "../services/member.service";
 import { Permissions } from "../enums/role.enum";
-import { roleGaurd } from "../utils/roleGaurd";
+import { roleGuard } from "../utils/roleGuard";
 
 export const createWorkspaceController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -59,7 +59,7 @@ export const getWorkspaceMembersController = asyncHandler(
     const userId = req.user?._id;
 
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-    roleGaurd(role, [Permissions.VIEW_ONLY]);
+    roleGuard(role, [Permissions.VIEW_ONLY]);
 
     const { members, roles } = await getWorkspaceMemberService(workspaceId); 
 
@@ -78,7 +78,7 @@ export const getWorkspaceAnalyticsController = asyncHandler(
     const userId = req.user?._id;
 
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-    roleGaurd(role, [Permissions.VIEW_ONLY]);
+    roleGuard(role, [Permissions.VIEW_ONLY]);
 
     const { analytics } = await getWorkspaceAnalyticsService(workspaceId);
 
@@ -89,26 +89,50 @@ export const getWorkspaceAnalyticsController = asyncHandler(
   }
 )
 
-export const changeWorkspaceMemberRole = asyncHandler(
-  async(req: Request, res: Response)=>{
+// export const changeWorkspaceMemberRoleController = asyncHandler(
+//   async(req: Request, res: Response)=>{
+//     const workspaceId = workspaceIdSchema.parse(req.params.id);
+//     const { memberId, roleId } = changeRoleSchema.parse(req.body);
+
+//     const userId = req.user?._id;
+
+//     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
+//     roleGaurd(role, [Permissions.CHANGE_MEMBER_ROLE]);
+
+//     const { member } = await changeMemberRoleService(
+//       workspaceId,
+//       memberId,
+//       roleId,
+//     );
+    
+    
+//     return res.status(HTTPSTATUS.OK).json({
+//       message: "Member Role changed successfully",
+//       member,
+//     })
+//   }
+// )
+
+export const changeWorkspaceMemberRoleController = asyncHandler(
+  async (req: Request, res: Response) => {
     const workspaceId = workspaceIdSchema.parse(req.params.id);
     const { memberId, roleId } = changeRoleSchema.parse(req.body);
+
     const userId = req.user?._id;
 
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-    roleGaurd(role, [Permissions.CHANGE_MEMBER_ROLE]);
+    roleGuard(role, [Permissions.CHANGE_MEMBER_ROLE]);
 
     const { member } = await changeMemberRoleService(
       workspaceId,
       memberId,
-      roleId,
+      roleId
     );
-    
+
     return res.status(HTTPSTATUS.OK).json({
       message: "Member Role changed successfully",
       member,
-    })
+    });
   }
-)
-
+);
 

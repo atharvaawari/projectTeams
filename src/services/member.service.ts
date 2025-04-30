@@ -50,8 +50,7 @@ export const joinWorkspaceByInviteService = async (
     workspaceId: workspace._id,
   }).exec();
 
-  if (existingMember)
-    throw new BadRequestException("You are already a member of this workspace");
+  if (existingMember) throw new BadRequestException("You are already a member of this workspace");
 
   const role = await RoleModel.findOne({ name: Roles.MEMBER });
 
