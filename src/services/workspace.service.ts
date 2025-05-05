@@ -185,6 +185,10 @@ export const updateWorkspaceByIdService = async (
   return { workspace };
 };
 
+//**************************
+// DELETE WORKSPACE
+//************************
+
 export const deleteWorkspaceByIdService = async (
   workspaceId: string,
   userId: string
