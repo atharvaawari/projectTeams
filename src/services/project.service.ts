@@ -1,4 +1,5 @@
 import ProjectModel from "../models/project.model";
+import { NotFoundException } from "../utils/appError";
 
 export const createProjectService = async (
   userId: string,
@@ -21,3 +22,44 @@ export const createProjectService = async (
 
   return { project };
 };
+
+export const getAllProjectsInWorkspaceService = async (
+  workspaceId: string,
+  pageSize: number,
+  pageNumber: number
+) => {
+  //step 1: find all projects in the workspace
+
+  const totalCount = await ProjectModel.countDocuments({
+    workspace: workspaceId,
+  });
+
+  const skip = (pageNumber - 1) * pageSize;
+
+  const projects = await ProjectModel.find({
+    workspace: workspaceId,
+  })
+    .skip(skip)
+    .limit(pageSize)
+    .populate("createdBy", "_id name profilePicture -password")
+    .sort({ createdAt: -1 });
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return { projects, totalCount, totalPages, skip }
+};
+
+
+export const getProjectByIdAndWorkspaceIdService = async(
+  workspaceId: string,
+  projectId: string
+)=>{
+  const project = await ProjectModel.findOne({
+    _id: projectId,
+    workspace: workspaceId,
+  }).select("_id emoji name description");
+
+  if(!project) throw new NotFoundException("Project not found or does not belongs to specified workspace");
+
+  return { project }
+}
