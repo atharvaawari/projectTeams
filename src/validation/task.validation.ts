@@ -34,7 +34,7 @@ export const createTaskSchema = z.object({
 })
 
 export const updateTaskSchema = z.object({
-  titlle: titleSchema,
+  title: titleSchema,
   description: descriptionSchema,
   priority: prioritySchema,
   status: statusSchema,

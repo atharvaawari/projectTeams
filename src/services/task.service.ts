@@ -1,7 +1,7 @@
 import ProjectModel from "../models/project.model";
 import MemberModel from "../models/member.model";
 import TaskModel from "../models/task.model";
-import { NotFoundException } from "../utils/appError";
+import { BadRequestException, NotFoundException } from "../utils/appError";
 import { TaskPriorityEnum, TaskStatusEnum } from "../enums/task.emun";
 
 export const createTaskService = async (
@@ -21,21 +21,21 @@ export const createTaskService = async (
 
   const project = await ProjectModel.findById(projectId);
 
-  if(!project || project.workspace.toString() !== workspaceId.toString()){
+  if (!project || project.workspace.toString() !== workspaceId.toString()) {
     throw new NotFoundException(
       "Project not found or does not belong to this workspace"
-    )
+    );
   }
 
-  if(assignedTo ){
+  if (assignedTo) {
     const isAssignedUserMember = await MemberModel.exists({
       userId: assignedTo,
       workspaceId,
     });
 
-    if(!isAssignedUserMember){
+    if (!isAssignedUserMember) {
       throw new Error("Assigned user is not a member of this workspace.");
-    };
+    }
   }
 
   const task = new TaskModel({
@@ -45,12 +45,54 @@ export const createTaskService = async (
     status: status || TaskStatusEnum.TODO,
     assignedTo,
     createdBy: userId,
-    workspaceId: workspaceId,
+    workspace: workspaceId,
     project: projectId,
-    dueDate
+    dueDate,
   });
 
   await task.save();
-  
-  return { task }
+
+  return { task };
+};
+
+export const updateTaskService = async (
+  workspaceId: string,
+  projectId: string,
+  taskId: string,
+  body: {
+    title: string;
+    description?: string;
+    priority: string;
+    status: string;
+    assignedTo?: string | null;
+    dueDate?: string;
+  }
+) => {
+  const project = await ProjectModel.findById(projectId);
+
+  if (!project || project.workspace.toString() !== workspaceId.toString())
+    throw new NotFoundException(
+      "Project not found or does not belongs to the specified workspace"
+    );
+
+  const task = await TaskModel.findById(taskId);
+
+  if (!task || task.project.toString() !== projectId.toString())
+    throw new NotFoundException(
+      "Task not found or does not belongs to the specified project"
+    );
+
+  const updatedTask = await TaskModel.findByIdAndUpdate(
+    taskId,
+    {
+      ...body,
+    },
+    { new: true }
+  );
+
+  if (!updatedTask) {
+    throw new BadRequestException("Failed to update task");
+  }
+
+  return { updatedTask };
 };

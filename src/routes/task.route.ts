@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { createTaskController } from "../controllers/task.controller";
+import { createTaskController, updateTaskController } from "../controllers/task.controller";
 
 const taskRoutes  = Router();
 
-taskRoutes.post("/projects/:projectId/workspace/workspaceId/create", createTaskController);
+taskRoutes.post("/project/:projectId/workspace/:workspaceId/create", createTaskController);
+
+taskRoutes.put("/:id/project/:projectId/workspace/:workspaceId/update", updateTaskController);
 
 export default taskRoutes;
