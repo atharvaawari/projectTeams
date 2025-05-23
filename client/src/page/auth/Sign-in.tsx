@@ -24,10 +24,12 @@ import GoogleOauthButton from "@/components/auth/google-oauth-button";
 import { useMutation } from "@tanstack/react-query";
 import { loginMutationFn } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
+import { Loader } from "lucide-react";
 
 const SignIn = () => {
 
   const navigate = useNavigate();
+
   const [searchParams] = useSearchParams();
   const returnUrl = searchParams.get('returnUrl');
 
@@ -59,7 +61,9 @@ const SignIn = () => {
     mutate(values, {
       onSuccess: (data)=> {
         const user = data.user;
+        console.log("user",user);
         const decodedUrl = returnUrl ? decodeURIComponent(returnUrl) : null;
+        console.log("decodedUrl",decodedUrl);
         navigate(decodedUrl || `/workspace/${user.currentWorkspace}`);
       },
       onError: (error)=>{
@@ -155,8 +159,12 @@ const SignIn = () => {
                           )}
                         />
                       </div>
-                      <Button type="submit" className="w-full">
-                        Login
+                      <Button 
+                      disabled={isPending}
+                      type="submit" className="w-full"
+                      >
+                        {isPending && <Loader className="animate-spin"/>}
+                       Login
                       </Button>
                     </div>
                     <div className="text-center text-sm">
