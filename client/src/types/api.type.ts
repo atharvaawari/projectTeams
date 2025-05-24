@@ -9,7 +9,7 @@ export type LoginResponseType = {
   message: string;
   user: {
     _id: string;
-    currentWorkspace: string;
+    currentWorkSpace: string;
   };
 };
 
@@ -29,7 +29,7 @@ export type UserType = {
   lastLogin: null;
   createdAt: Date;
   updatedAt: Date;
-  currentWorkspace: {
+  currentWorkSpace: {
     _id: string;
     name: string;
     owner: string;

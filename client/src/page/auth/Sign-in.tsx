@@ -61,10 +61,9 @@ const SignIn = () => {
     mutate(values, {
       onSuccess: (data)=> {
         const user = data.user;
-        console.log("user",user);
         const decodedUrl = returnUrl ? decodeURIComponent(returnUrl) : null;
-        console.log("decodedUrl",decodedUrl);
-        navigate(decodedUrl || `/workspace/${user.currentWorkspace}`);
+        
+        navigate(decodedUrl || `/workspace/${user.currentWorkSpace}`); //currentWorkSpace only currentWorkSpace syntaxt is this
       },
       onError: (error)=>{
         toast({
