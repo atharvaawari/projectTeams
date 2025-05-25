@@ -1,13 +1,17 @@
 import { DashboardSkeleton } from "@/components/skeleton-loaders/dashboard-skeleton";
 import useAuth from "@/hooks/api/use-auth";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { isAuthRoute } from "./common/routePaths";
 
 const AuthRoute = () => {
-  const { data: authData, isLoading } = useAuth();
 
+  const location = useLocation();  //get current route loaction
+  const { data: authData, isLoading } = useAuth();
   const user = authData?.user;
 
-  if(isLoading) return <DashboardSkeleton/>;
+  const _isAuthRoute = isAuthRoute(location.pathname); //return the current location path is auth route or not
+
+  if(isLoading && !_isAuthRoute) return <DashboardSkeleton/>;  //so that dashboard skeleton not visible while ladong login page
 
   if(!user) return <Outlet/>;
 
