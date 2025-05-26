@@ -3,6 +3,7 @@ import useWorkspaceId from "@/hooks/use-workspace-id";
 import useAuth from "@/hooks/api/use-auth";
 import { UserType, WorkspaceType } from "@/types/api.type";
 import useGetWorkspaceQuery from "@/hooks/api/use-get-workspace";
+import { useNavigate } from "react-router-dom";
 
 // Define the context shape
 type AuthContextType = {
@@ -23,6 +24,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const workspaceId = useWorkspaceId();
 
+  const navigate = useNavigate();
+
   const {
     data: authData,
     error: authError,
@@ -42,7 +45,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const workspace = workspaceData?.workspace;
 
-  useEffect(() => {});
+  useEffect(() => {
+    if(workspaceError){
+      if(workspaceError?.errorCode === "RESOURCE_NOT_FOUND"){
+        navigate("/");
+      }
+      // if(workspaceError?.errorCode === "ACCESS_UNAUTHoRIZED"){
+      //   navigate("/");
+      //   console.log("w1",workspaceError);
+      // }
+    }
+  }, [navigate, workspaceError]);
 
   return (
     <AuthContext.Provider

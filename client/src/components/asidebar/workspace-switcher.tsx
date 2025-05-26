@@ -71,7 +71,6 @@ export function WorkspaceSwitcher() {
 
   React.useEffect(() => {
     if (workspaces?.length) {
-      console.log("workspaces",workspaces);
       const workspace = workspaceId
         ? workspaces.find((ws) => ws._id === workspaceId)
         : workspaces[0];
