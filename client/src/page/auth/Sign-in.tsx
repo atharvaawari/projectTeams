@@ -65,10 +65,11 @@ const SignIn = () => {
         
         navigate(decodedUrl || `/workspace/${user.currentWorkSpace}`); //currentWorkSpace only currentWorkSpace syntaxt is this
       },
-      onError: (error)=>{
+      onError: (error: any)=>{
+        console.log("error.message", error.response.data.message);
         toast({
           title:"Error",
-          description: error.message,
+          description: error.response.data.message,
           variant: "destructive",
         })
       }
