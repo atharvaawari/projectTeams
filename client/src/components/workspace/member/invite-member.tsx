@@ -1,6 +1,8 @@
+import PermissionsGuard from "@/components/resuable/permission-guard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Permissions } from "@/constant";
 import { useAuthContext } from "@/context/auth-provider";
 import { toast } from "@/hooks/use-toast";
 import { BASE_ROUTE } from "@/routes/common/routePaths";
@@ -42,6 +44,7 @@ const InviteMember = () => {
         disable and create a new invite link for this Workspace at any time.
       </p>
 
+      <PermissionsGuard showMessage requiredPermission={Permissions.ADD_MEMBER}>
       {workspaceLoading ? (
         <Loader
           className="
@@ -71,6 +74,8 @@ const InviteMember = () => {
           </Button>
         </div>
       )}
+      </PermissionsGuard>
+
     </div>
   );
 };
