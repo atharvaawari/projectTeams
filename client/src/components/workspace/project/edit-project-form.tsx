@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,7 +25,7 @@ export default function EditProjectForm(props: {
   project?: ProjectType;
   onClose: () => void;
 }) {
-  const { onClose } = props;
+  const { project, onClose } = props;
 
   const [emoji, setEmoji] = useState("📊");
 
@@ -43,6 +43,14 @@ export default function EditProjectForm(props: {
       description: "",
     },
   });
+
+  useEffect(() => {
+    if (project) {
+      setEmoji(project.project.emoji);
+      form.setValue("name", project.project.name);
+      form.setValue("description", project.project.description);
+    }
+  }, [form, project]);
 
   const handleEmojiSelection = (emoji: string) => {
     setEmoji(emoji);
