@@ -20,12 +20,25 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "../../ui/textarea";
 import EmojiPickerComponent from "@/components/emoji-picker";
 import { ProjectType } from "@/types/api.type";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { editProjectMutationFn } from "@/lib/api";
+import useWorkspaceId from "@/hooks/use-workspace-id";
+import { toast } from "@/hooks/use-toast";
+import { Loader } from "lucide-react";
 
 export default function EditProjectForm(props: {
   project?: ProjectType;
   onClose: () => void;
 }) {
   const { project, onClose } = props;
+  const workspaceId = useWorkspaceId();
+  const queryClient = useQueryClient();
+
+  const projectId = project?.project?._id as string;
+
+  const {mutate, isPending } = useMutation({
+    mutationFn: editProjectMutationFn,
+  }); 
 
   const [emoji, setEmoji] = useState("📊");
 
@@ -57,8 +70,39 @@ export default function EditProjectForm(props: {
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log(values);
-    onClose();
+    if(isPending) return;
+
+    console.log("projectId", projectId);
+    const payload = {
+      projectId,
+      workspaceId,
+      data: { emoji, ...values},
+    };
+    mutate(payload, {
+      onSuccess:(data)=>{
+        queryClient.invalidateQueries({
+          queryKey:["s ingleProject", projectId]
+        });
+        
+        queryClient.invalidateQueries({
+          queryKey:["allprojects", workspaceId]
+        });
+
+        toast({
+          title:"Success",
+          description: data.message,
+          variant:"success"
+        })
+        setTimeout(()=> onClose(), 100);
+      },
+      onError:(error)=>{
+        toast({
+          title:"Error",
+          description:error.message,
+          variant:"destructive"
+        })
+      }
+    });
   };
 
   return (
@@ -138,10 +182,12 @@ export default function EditProjectForm(props: {
             </div>
 
             <Button
+            disabled={isPending}
               className="flex place-self-end  h-[40px] text-white font-semibold"
               type="submit"
             >
-              Create
+              {isPending && <Loader className="animate-spin"/>}
+              Update
             </Button>
           </form>
         </Form>
