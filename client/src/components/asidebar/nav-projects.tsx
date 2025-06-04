@@ -30,6 +30,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteProjectMutationFn } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
+//TIME STAMP: 4:13:18 continue with tasks
+
 export function NavProjects() {
   const navigate = useNavigate();
   const location = useLocation();

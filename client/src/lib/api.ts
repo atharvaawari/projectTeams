@@ -7,6 +7,7 @@ import {
   AnalyticsResponseType,
   ChangeWorkspaceMemberRoleType,
   CreateProjectPayloadType,
+  CreateTaskPayloadType,
   CreateWorkspaceResponseType,
   CreateWorkspaceType,
   CurrentUserResponseType,
@@ -164,24 +165,38 @@ export const getProjectByIdQueryFn = async ({
 
 export const getProjectAnalyticsQueryFn = async ({
   workspaceId,
-  projectId
-}: ProjectByIdPayloadType ):Promise<AnalyticsResponseType>  => {
-  const response = await API.get(`/project/${projectId}/workspace/${workspaceId}/analytics`);
+  projectId,
+}: ProjectByIdPayloadType): Promise<AnalyticsResponseType> => {
+  const response = await API.get(
+    `/project/${projectId}/workspace/${workspaceId}/analytics`
+  );
   return response.data;
 };
 
 export const deleteProjectMutationFn = async ({
   workspaceId,
-  projectId
-}: ProjectByIdPayloadType): Promise<{message: string}> => {
-  const response  = await API.delete(`/project/${projectId}/workspace/${workspaceId}/delete`);
-  return response.data
+  projectId,
+}: ProjectByIdPayloadType): Promise<{ message: string }> => {
+  const response = await API.delete(
+    `/project/${projectId}/workspace/${workspaceId}/delete`
+  );
+  return response.data;
 };
 
 //*******TASKS ********************************
 //************************* */
 
-export const createTaskMutationFn = async () => {};
+export const createTaskMutationFn = async ({
+  workspaceId,
+  projectId,
+  data,
+}: CreateTaskPayloadType) => {
+  const response = await API.post(
+    `/task/project/${projectId}/workspace/${workspaceId}/create`,
+    data
+  );
+  return response.data;
+};
 
 export const getAllTasksQueryFn = async () => {};
 
