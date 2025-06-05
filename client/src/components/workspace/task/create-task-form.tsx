@@ -39,6 +39,11 @@ import useGetProjectsInWorkspaceQuerry from "@/hooks/api/use-get-projects";
 import useGetWorkspaceMembers from "@/hooks/use-get-workspace-members";
 import { Avatar } from "@radix-ui/react-avatar";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createTaskMutationFn } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
+
+//TIME-STAMPS 4:31:35 //date[05-06-25]
 
 export default function CreateTaskForm(props: {
   projectId?: string;
@@ -46,7 +51,12 @@ export default function CreateTaskForm(props: {
 }) {
   const { projectId, onClose } = props;
 
+  const queryClient = useQueryClient();
   const workspaceId = useWorkspaceId();
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: createTaskMutationFn,
+  });
 
   const { data, isLoading } = useGetProjectsInWorkspaceQuerry({
     workspaceId,
@@ -135,8 +145,36 @@ export default function CreateTaskForm(props: {
   const priorityOptions = transformOptions(taskPriorityList);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log(values, { workspaceId: workspaceId });
-    onClose();
+    if (isPending) return;
+    const payload = {
+      workspaceId,
+      projectId: values.projectId,
+      data: {
+        ...values,
+        dueDate: values.dueDate.toISOString(),
+      },
+    };
+
+    mutate(payload, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["project-analytics", projectId],
+        });
+        toast({
+          title: "Success",
+          description: "Task created Successfully",
+          variant: "success",
+        });
+        onClose();
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      },
+    });
   };
 
   return (
@@ -263,7 +301,7 @@ export default function CreateTaskForm(props: {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <div  className="w-full max-h-[200px] overflow-y-auto scrollbar">
+                        <div className="w-full max-h-[200px] overflow-y-auto scrollbar">
                           {membersOptions?.map((option) => (
                             <SelectItem
                               className="cursor-pointer"
@@ -409,8 +447,9 @@ export default function CreateTaskForm(props: {
             <Button
               className="flex place-self-end  h-[40px] text-white font-semibold"
               type="submit"
+              disabled={isPending}
             >
-              <Loader className="animate-spin" />
+              {isPending && <Loader className="animate-spin" />}
               Create
             </Button>
           </form>
