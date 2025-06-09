@@ -77,7 +77,7 @@ export default function CreateTaskForm(props: {
           <span>{project.name}</span>
         </div>
       ),
-      vlaue: project._id,
+      value: project._id,
     };
   });
 
@@ -265,9 +265,9 @@ export default function CreateTaskForm(props: {
                           <div className="w-full max-h-[200px] overflow-y-auto scrollbar">
                             {projectOptions?.map((option) => (
                               <SelectItem
-                                key={option.vlaue}
+                                key={option.value}
                                 className="!capitalize cursor-pointer"
-                                value={option.vlaue}
+                                value={option.value}
                               >
                                 {option.label}
                               </SelectItem>
