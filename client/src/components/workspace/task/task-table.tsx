@@ -8,6 +8,10 @@ import { X } from "lucide-react";
 import { DataTableFacetedFilter } from "./table/table-faceted-filter";
 import { priorities, statuses } from "./table/data";
 import useTaskTableFilter from "@/hooks/use-task-table-filter";
+import { useQuery } from "@tanstack/react-query";
+import useWorkspaceId from "@/hooks/use-workspace-id";
+import { getAllTasksQueryFn } from "@/lib/api";
+import { TaskType } from "@/types/api.type";
 
 type Filters = ReturnType<typeof useTaskTableFilter>[0];
 type SetFilters = ReturnType<typeof useTaskTableFilter>[1];
@@ -29,9 +33,34 @@ const TaskTable = () => {
   const [pageSize, setPageSize] = useState(10);
 
   const [filters, setFilters] = useTaskTableFilter();
+  const workspaceId = useWorkspaceId();
   const columns = getColumns(projectId);
 
-  const totalCount = 0;
+  const { data, isLoading } = useQuery({
+    queryKey: [
+      "all-tasks",
+      workspaceId,
+      pageSize,
+      pageNumber,
+      filters,
+      projectId,
+    ],
+    queryFn: () =>
+      getAllTasksQueryFn({
+        workspaceId,
+        keyword: filters.keyword,
+        priority: filters.priority,
+        status: filters.status,
+        projectId: projectId || filters.projectId,
+        assignedTo: filters.assigneeId,
+        pageNumber,
+        pageSize,
+      }),
+    staleTime: 0,
+  });
+
+  const tasks: TaskType[] = data?.tasks || [];
+  const totalCount = data?.pagination.totalCount || 0;
 
   const handlePageChange = (page: number) => {
     setPageNumber(page);
@@ -45,8 +74,8 @@ const TaskTable = () => {
   return (
     <div className="w-full relative">
       <DataTable
-        isLoading={false}
-        data={[]}
+        isLoading={isLoading}
+        data={tasks}
         columns={columns}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
