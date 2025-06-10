@@ -117,7 +117,7 @@ export const getprojectAnalyticsService = async (
 
   const _analytics = taskAnalytics[0];
   const analytics = {
-    totalTask: _analytics.totalTasks[0]?.count || 0,
+    totalTasks: _analytics.totalTasks[0]?.count || 0,
     overdueTasks: _analytics.overdueTasks[0]?.count || 0,
     completedTasks: _analytics.completedTasks[0]?.count || 0,
   };
