@@ -226,6 +226,20 @@ export type CreateTaskPayloadType = {
   };
 };
 
+export type EditTaskPayloadType = {
+  taskId: string;
+  workspaceId: string;
+  projectId: string;
+  data: Partial<{
+    title: string;
+    description: string;
+    priority: TaskPriorityEnumType;
+    status: TaskStatusEnumType;
+    assignedTo: string;
+    dueDate: string;
+  }>;
+};
+
 export type TaskType = {
   _id: string;
   title: string;

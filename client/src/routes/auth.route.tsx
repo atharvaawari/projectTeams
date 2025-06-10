@@ -11,7 +11,7 @@ const AuthRoute = () => {
 
   const _isAuthRoute = isAuthRoute(location.pathname); //return the current location path is auth route or not
 
-  if(isLoading && !_isAuthRoute) return <DashboardSkeleton/>;  //so that dashboard skeleton not visible while ladong login page
+  if(isLoading || !_isAuthRoute) return <DashboardSkeleton/>;  // default was && so that dashboard skeleton not visible while ladong login page
 
   if(!user) return <Outlet/>;
 

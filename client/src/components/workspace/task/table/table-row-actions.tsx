@@ -13,6 +13,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/resuable/confirm-dialog";
 import { TaskType } from "@/types/api.type";
+import EditTaskDialog from "../edit-task-dialog";
+import { deleteTaskMutationFn } from "@/lib/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useWorkspaceId from "@/hooks/use-workspace-id";
+import { toast } from "@/hooks/use-toast";
 
 interface DataTableRowActionsProps {
   row: Row<TaskType>;
@@ -20,11 +25,34 @@ interface DataTableRowActionsProps {
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const [openDeleteDialog, setOpenDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
 
+  const queryClient = useQueryClient();
+  const workspaceId = useWorkspaceId();
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: deleteTaskMutationFn,
+  });
+
+  const task = row.original;
   const taskId = row.original._id as string;
   const taskCode = row.original.taskCode;
 
-  const handleConfirm = () => {};
+   const handleConfirm = () => {
+    mutate(
+      { workspaceId, taskId },
+      {
+        onSuccess: (data) => {
+          queryClient.invalidateQueries({ queryKey: ["all-tasks", workspaceId] });
+          toast({ title: "Success", description: data.message, variant: "success" });
+          setTimeout(() => setOpenDialog(false), 100);
+        },
+        onError: (error) => {
+          toast({ title: "Error", description: error.message, variant: "destructive" });
+        },
+      }
+    );
+  };
 
   return (
     <>
@@ -39,7 +67,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[160px]">
-          <DropdownMenuItem className="cursor-pointer">
+          <DropdownMenuItem className="cursor-pointer" onClick={() => setOpenEditDialog(true)}>
             Edit Task
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -53,9 +81,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {/* Edit Task Dialog */}
+      <EditTaskDialog task={task} isOpen={openEditDialog} onClose={() => setOpenEditDialog(false)} />
+
       <ConfirmDialog
         isOpen={openDeleteDialog}
-        isLoading={false}
+        isLoading={isPending}
         onClose={() => setOpenDialog(false)}
         onConfirm={handleConfirm}
         title="Delete Task"
