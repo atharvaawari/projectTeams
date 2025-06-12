@@ -53,10 +53,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if(workspaceError?.errorCode === "RESOURCE_NOT_FOUND"){
         navigate("/");
       }
-      // if(workspaceError?.errorCode === "ACCESS_UNAUTHoRIZED"){
-      //   navigate("/");
-      //   console.log("w1",workspaceError);
-      // }
     }
   }, [navigate, workspaceError]);
 

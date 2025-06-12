@@ -11,7 +11,11 @@ import { Separator } from "./ui/separator";
 import { Link, useLocation } from "react-router-dom";
 import useWorkspaceId from "@/hooks/use-workspace-id";
 
-const Header = () => {
+type HeaderProps = {
+  onToggleRightSidebar?: () => void;
+};
+
+const Header = ({ onToggleRightSidebar }: HeaderProps) => {
   const location = useLocation();
   const workspaceId = useWorkspaceId();
 
@@ -57,6 +61,9 @@ const Header = () => {
             )}
           </BreadcrumbList>
         </Breadcrumb>
+        <button onClick={onToggleRightSidebar} className="ml-auto">
+          Chat AI
+        </button>
       </div>
     </header>
   );
