@@ -115,7 +115,9 @@ export const getprojectAnalyticsService = async (
     },
   ]);
 
-  const _analytics = taskAnalytics[0];
+  //corrected the syntaxt type error
+
+  const _analytics = taskAnalytics[0]; 
   const analytics = {
     totalTasks: _analytics.totalTasks[0]?.count || 0,
     overdueTasks: _analytics.overdueTasks[0]?.count || 0,

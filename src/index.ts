@@ -20,6 +20,7 @@ import workspaceRoute from "./routes/workspace.route";
 import memberRoute from "./routes/member.route";
 import projectRoute from "./routes/project.route";
 import taskRoutes from "./routes/task.route";
+import chatRouter from "./routes/aichat.route";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -63,6 +64,7 @@ app.use(`${BASE_PATH}/workspace`, isAuthenticated, workspaceRoute);
 app.use(`${BASE_PATH}/member`, isAuthenticated, memberRoute);
 app.use(`${BASE_PATH}/project`, isAuthenticated, projectRoute);
 app.use(`${BASE_PATH}/task`, isAuthenticated, taskRoutes);
+app.use(`${BASE_PATH}/ai`, isAuthenticated, chatRouter);
 
 
 app.use(errorHandler);
