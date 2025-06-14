@@ -257,3 +257,8 @@ export const deleteTaskMutationFn = async ({
   );
   return response.data;
 };
+
+export const aiQueryMutationFn = async (query: { query: string }) => {
+  const response = await API.post(`/ai/query`, query);
+  return response.data;
+};

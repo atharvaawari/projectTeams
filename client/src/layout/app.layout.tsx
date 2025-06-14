@@ -10,13 +10,13 @@ import { useState } from "react";
 
 const AppLayout = () => {
 
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
 
   return (
     <AuthProvider>
       <SidebarProvider>
         <Asidebar />
-        <SidebarInset className="overflow-x-hidden">
+        <SidebarInset className="overflow-x-hidden ">
           <div className="w-full">
             <>
               <Header onToggleRightSidebar={() => setIsRightSidebarOpen(true)} />
