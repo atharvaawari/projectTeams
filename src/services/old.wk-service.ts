@@ -10,10 +10,6 @@ import { TaskStatusEnum } from "../enums/task.emun";
 import ProjectModel from "../models/project.model";
 import { embeddings } from "../utils/embeddings";
 import { qdrantClient } from "../config/qdrant";
-import {
-  safeDeleteEmbedding,
-  safeUpsertEmbedding,
-} from "../utils/embeddingUtils";
 
 //**************************
 // CREATE NEW WORKSPACE
@@ -56,12 +52,25 @@ export const createWorkspaceService = async (
   user.currentWorkSpace = workspace._id as mongoose.Types.ObjectId;
   await user.save();
 
-  safeUpsertEmbedding(
-    "workspace_embeddings",
-    workspace.inviteCode,
-    `${name} ${description || ""}`,
-    { type: "WORKSPACE", ownerId: userId, name, description }
-  ).catch(() => {});
+  // Generate embedding
+  const textToEmbed = `${name} ${description || ""}`;
+  const vector = await embeddings.embedQuery(textToEmbed);
+
+  //Store in Qdrant  // Use workspace._id as Qdrant point ID
+  await qdrantClient.upsert("workspace_embeddings", {
+    points: [
+      {
+        id: `${workspace?._id}`,
+        vector,
+        payload: {
+          type: "WORKSPACE",
+          ownerId: userId,
+          name,
+          description,
+        },
+      },
+    ],
+  });
 
   return {
     workspace,
@@ -191,17 +200,28 @@ export const updateWorkspaceByIdService = async (
 
   if (!workspace) throw new NotFoundException("Workspace not found");
 
+  // Update MongoDB
   workspace.name = name || workspace.name;
   workspace.description = description || workspace.description;
   await workspace.save();
 
+  // Regenerate & update embedding in Qdrant if name/description changed
   if (name || description) {
-    safeUpsertEmbedding(
-      "workspace_embeddings",
-      workspace.inviteCode,
-      `${workspace.name} ${workspace.description || ""}`,
-      { name, description }
-    );
+    const textToEmbed = `${workspace.name} ${workspace.description || ""}`;
+    const vector = await embeddings.embedQuery(textToEmbed);
+
+    await qdrantClient.upsert("workspace_embeddings", {
+      points: [
+        {
+          id: workspaceId,
+          vector,
+          payload: {
+            ...(name && { name }),
+            ...(description && { description }),
+          },
+        },
+      ],
+    });
   }
 
   return { workspace };
@@ -234,7 +254,12 @@ export const deleteWorkspaceByIdService = async (
 
     if (!user) throw new NotFoundException("User not found");
 
-    safeDeleteEmbedding("workspace_embeddings", workspace?.inviteCode); //deleting embedding from qdrant
+    // Delete from Qdrant first
+    await qdrantClient.delete("workspace_embeddings", {
+      filter: {
+        must: [{ key: "id", match: { value: workspaceId } }],
+      },
+    });
 
     await ProjectModel.deleteMany({ workspace: workspace._id }).session(
       session
@@ -272,40 +297,40 @@ export const deleteWorkspaceByIdService = async (
   }
 };
 
+//**************************
+// SEARCH WORKSPACE FOR AI ASSISTANCE
+//************************
+
 export const searchWorkspacesService = async (
   query: string,
   userId: string
 ) => {
-  try {
-    // 1. Get user's workspace IDs
-    const userMemberships = await MemberModel.find({ userId });
-    const userWorkspaceIds = userMemberships.map((m) =>
-      m.workspaceId.toString()
-    );
+  // 1. Get user's workspace IDs (for filtering)
+  const userMemberships = await MemberModel.find({ userId });
+  const userWorkspaceIds = userMemberships.map((m) => m.workspaceId.toString());
 
-    // 2. Embed the query
-    const queryEmbedding = await embeddings.embedQuery(query);
+  // 2. Embed the query
+  const queryEmbedding = await embeddings.embedQuery(query);
 
-    // 3. Search Qdrant
-    const searchResult = await qdrantClient.search("workspace_embeddings", {
-      vector: queryEmbedding,
-      filter: {
-        must: [
-          { key: "id", match: { any: userWorkspaceIds } },
-          { key: "type", match: { value: "WORKSPACE" } },
-        ],
-      },
-      limit: 5,
-    });
+  // 3. Search Qdrant (correct response handling)
+  const searchResult = await qdrantClient.search("workspace_embeddings", {
+    vector: queryEmbedding,
+    filter: {
+      must: [
+        { key: "id", match: { any: userWorkspaceIds } },
+        { key: "type", match: { value: "WORKSPACE" } },
+      ],
+    },
+    limit: 5,
+  });
 
-    // 4. Fetch from MongoDB
-    const workspaces = await WorkspaceModel.find({
-      _id: { $in: searchResult.map((r) => r.id) },
-    });
+  // 4. Extract workspace IDs from Qdrant results
+  const workspaceIds = searchResult.map((result) => result.id);
 
-    return { workspaces };
-  } catch (error) {
-    console.error("Semantic search failed:", error);
-    throw new Error("Workspace search service unavailable");
-  }
+  // 5. Fetch full workspace details from MongoDB
+  const workspaces = await WorkspaceModel.find({
+    _id: { $in: workspaceIds },
+  });
+
+  return { workspaces };
 };

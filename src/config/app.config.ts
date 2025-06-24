@@ -17,6 +17,7 @@ const appConfig = ()=>({
   FRONTEND_GOOGLE_CALLBACK_URL: getEnv("FRONTEND_GOOGLE_CALLBACK_URL"),
   OPENAI_API_KEY:getEnv("OPENAI_API_KEY"),
   QDRANT_URL:getEnv("QDRANT_URL"),
+  QDRANT_API_KEY:getEnv("QDRANT_API_KEY"),
 })
 
 export const config = appConfig();

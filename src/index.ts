@@ -21,6 +21,8 @@ import memberRoute from "./routes/member.route";
 import projectRoute from "./routes/project.route";
 import taskRoutes from "./routes/task.route";
 import chatRouter from "./routes/aichat.route";
+import { initQdrantCollection, qdrantClient } from "./config/qdrant";
+import { resetCollection } from "./config/qdrant";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -66,7 +68,6 @@ app.use(`${BASE_PATH}/project`, isAuthenticated, projectRoute);
 app.use(`${BASE_PATH}/task`, isAuthenticated, taskRoutes);
 app.use(`${BASE_PATH}/ai`, isAuthenticated, chatRouter);
 
-
 app.use(errorHandler);
 
 connectDatabase().then(() => {
@@ -76,3 +77,33 @@ connectDatabase().then(() => {
     );
   });
 });
+
+async function callresetCollection() {
+  // await resetCollection('workspace_embeddings', 1536, 'Cosine');
+  // const info = await qdrantClient.getCollection('workspace_embeddings');
+  // console.log(info);
+  // const details = await qdrantClient.getCollection("workspace_embeddings");
+  // console.log("Vector size:", details.config?.params?.vectors?.size);
+  initQdrantCollection("workspace_embeddings");
+}
+
+callresetCollection();
+
+// Add this debug function
+// export async function debugCollection() {
+//   try {
+//     const collectionInfo = await qdrantClient.getCollection("workspace_embeddings");
+//     console.log("Collection config:", JSON.stringify(collectionInfo.config, null, 2));
+//     return true;
+//   } catch (error) {
+//     console.error("Collection check failed:", error);
+//     return false;
+//   }
+// }
+
+// async function callDebugCollection() {
+//   // Call this at startup
+// await debugCollection();
+// }
+
+// callDebugCollection();

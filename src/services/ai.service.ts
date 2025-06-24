@@ -2,6 +2,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
 import { getRelevantContext } from "../utils/getRelevantContext";
 import { NotFoundException } from "../utils/appError";
+import { extractJsonFromText } from "../utils/extractJsonFromText";
 
 // Define all possible query types
 const QueryTypeSchema = z.enum([
@@ -64,10 +65,3 @@ export const handleWorkspaceQueryService = async (
 
   return ResponseSchema.parse(JSON.parse(jsonString));
 };
-
-
-// Helper to extract JSON from potentially messy output
-function extractJsonFromText(text: string): string {
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  return jsonMatch ? jsonMatch[0] : text;
-}
