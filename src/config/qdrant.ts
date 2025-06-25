@@ -7,6 +7,7 @@ export const qdrantClient = new QdrantClient({
   apiKey: config.QDRANT_API_KEY, // Optional (for cloud Qdrant)
 });
 
+//init Collection
 export const initQdrantCollection = async (collectionName: string) => {
   try {
     const info = await qdrantClient.getCollections();
@@ -37,6 +38,7 @@ export const initQdrantCollection = async (collectionName: string) => {
   }
 };
 
+//reset collection
 export const resetCollection = async (
   collectionName: string,
   vectorSize: number = 1536,

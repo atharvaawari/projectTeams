@@ -1,7 +1,6 @@
-// utils/embeddingUtils.ts
+import { v4 as uuidv4 } from "uuid";
 import { embeddings } from "./embeddings";
 import { qdrantClient } from "../config/qdrant";
-
 
 export const safeUpsertEmbedding = async (
   collection: string,
@@ -18,21 +17,16 @@ export const safeUpsertEmbedding = async (
     const payload = {
       ...metadata,
       ownerId: metadata?.ownerId?.toString(),
+      mongoId: id,
       text: text.substring(0, 1000),
     };
 
-    console.log("Attempting upsert with:", {
-     points: [{
-          id: id,
-          payload: payload,
-          vector: vector.length,
-        }]
-    });
+    const qdrantId = uuidv4();
 
     await qdrantClient.upsert(collection, {
       points: [
         {
-          id: id,
+          id: qdrantId,
           payload: payload,
           vector: vector,
         },
@@ -43,17 +37,31 @@ export const safeUpsertEmbedding = async (
       error,
       text: text.substring(0, 100) + (text.length > 100 ? "..." : ""),
     });
-
-    // Continue without throwing
   }
 };
 
-export const safeDeleteEmbedding = async (collection: string, id: string) => {
+export const safeDeleteEmbedding = async (
+  collection: string,
+  mongoId: string
+) => {
   try {
+    // Since UUIDv4 is not derived from mongoId, we need to delete by filter
     await qdrantClient.delete(collection, {
-      points: [id],
+      filter: {
+        must: [
+          {
+            key: "mongoId",
+            match: {
+              value: mongoId,
+            },
+          },
+        ],
+      },
     });
   } catch (error) {
-    console.error(`Embedding deletion failed for ${collection}/${id}:`, error);
+    console.error(
+      `Embedding deletion failed for ${collection}/${mongoId}:`,
+      error
+    );
   }
 };

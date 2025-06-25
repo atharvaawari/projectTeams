@@ -56,9 +56,11 @@ export const createWorkspaceService = async (
   user.currentWorkSpace = workspace._id as mongoose.Types.ObjectId;
   await user.save();
 
+  if (!workspace?._id) throw new NotFoundException("Missing Workspace id");
+
   safeUpsertEmbedding(
     "workspace_embeddings",
-    workspace.inviteCode,
+    workspace._id.toString(),
     `${name} ${description || ""}`,
     { type: "WORKSPACE", ownerId: userId, name, description }
   ).catch(() => {});
@@ -195,10 +197,12 @@ export const updateWorkspaceByIdService = async (
   workspace.description = description || workspace.description;
   await workspace.save();
 
+  if (!workspace?._id) throw new NotFoundException("Missing Workspace id");
+
   if (name || description) {
     safeUpsertEmbedding(
       "workspace_embeddings",
-      workspace.inviteCode,
+      workspace._id.toString(),
       `${workspace.name} ${workspace.description || ""}`,
       { name, description }
     );
@@ -234,7 +238,11 @@ export const deleteWorkspaceByIdService = async (
 
     if (!user) throw new NotFoundException("User not found");
 
-    safeDeleteEmbedding("workspace_embeddings", workspace?.inviteCode); //deleting embedding from qdrant
+    if (!workspace?._id) throw new NotFoundException("Missing Workspace id");
+
+    safeDeleteEmbedding("workspace_embeddings", workspace._id.toString()).catch(()=>{
+      throw new BadRequestException("Delete Embeddings failed");
+    }); //deleting embedding from qdrant
 
     await ProjectModel.deleteMany({ workspace: workspace._id }).session(
       session
