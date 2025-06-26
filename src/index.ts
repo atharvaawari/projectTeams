@@ -82,6 +82,7 @@ connectDatabase().then(() => {
 async function createQdrantDBcollections() {
   initQdrantCollection("workspace_embeddings");
   initQdrantCollection("task_embeddings");
+  initQdrantCollection("project_embeddings");
 
   // await WorkspaceModel.deleteMany({ owner: new mongoose.Types.ObjectId("680c5361feb129305a7027af") });
 
