@@ -3,6 +3,10 @@ import MemberModel from "../models/member.model";
 import TaskModel from "../models/task.model";
 import { BadRequestException, NotFoundException } from "../utils/appError";
 import { TaskPriorityEnum, TaskStatusEnum } from "../enums/task.emun";
+import {
+  safeDeleteEmbedding,
+  safeUpsertEmbedding,
+} from "../utils/embeddingUtils";
 
 export const createTaskService = async (
   workspaceId: string,
@@ -52,6 +56,23 @@ export const createTaskService = async (
 
   await task.save();
 
+  if (!task._id) throw new NotFoundException("task id is missing");
+
+  safeUpsertEmbedding(
+    "task_embeddings",
+    task._id.toString(),
+    `${title} ${description || ""}`.trim(),
+    {
+      type: "TASK",
+      workspaceId: workspaceId.toString(),
+      projectId: projectId.toString(),
+      status,
+      priority,
+      createdBy: userId.toString(),
+      assignedTo: assignedTo?.toString(),
+    }
+  ).catch((e) => console.error("Task embedding failed:", e));
+
   return { task };
 };
 
@@ -92,6 +113,24 @@ export const updateTaskService = async (
 
   if (!updatedTask) {
     throw new BadRequestException("Failed to update task");
+  }
+
+  // Update embedding if title/description changed
+  if (body.title || body.description) {
+    safeUpsertEmbedding(
+      "task_embeddings",
+      taskId.toString(),
+      `${updatedTask.title} ${updatedTask.description || ""}`.trim(),
+      {
+        type: "TASK",
+        workspaceId: workspaceId.toString(),
+        projectId: projectId.toString(),
+        status: updatedTask.status,
+        priority: updatedTask.priority,
+        createdBy: updatedTask.createdBy.toString(),
+        assignedTo: updatedTask.assignedTo?.toString(),
+      }
+    ).catch((e) => console.error("Task embedding update failed:", e));
   }
 
   return { updatedTask };
@@ -195,6 +234,13 @@ export const deleteTaskService = async (
       "Task not found or does not belong to the specified workspace"
     );
   }
+
+  if(!task._id) throw new NotFoundException("No task id found");
+
+  // Delete the associated embedding
+  safeDeleteEmbedding("task_embeddings", task._id.toString()).catch((e) =>
+    console.error("Task embedding deletion failed:", e)
+  );
 
   return;
 };

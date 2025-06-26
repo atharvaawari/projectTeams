@@ -21,7 +21,9 @@ import memberRoute from "./routes/member.route";
 import projectRoute from "./routes/project.route";
 import taskRoutes from "./routes/task.route";
 import chatRouter from "./routes/aichat.route";
-import { initQdrantCollection, qdrantClient, } from "./config/qdrant";
+import { initQdrantCollection, qdrantClient, resetCollection, } from "./config/qdrant";
+import WorkspaceModel from "./models/workspace.model";
+import mongoose from "mongoose";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -77,15 +79,13 @@ connectDatabase().then(() => {
   });
 });
 
-async function callresetCollection() {
-  // await resetCollection('workspace_embeddings', 1536, 'Cosine');
-//   await qdrantClient.createPayloadIndex("workspace_embeddings", {
-//   field_name: "mongoId",
-//   field_schema: "keyword",
-// });
-
+async function createQdrantDBcollections() {
   initQdrantCollection("workspace_embeddings");
+  initQdrantCollection("task_embeddings");
+
+  // await WorkspaceModel.deleteMany({ owner: new mongoose.Types.ObjectId("680c5361feb129305a7027af") });
+
 }
 
-callresetCollection();
+createQdrantDBcollections();
 

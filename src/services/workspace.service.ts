@@ -204,7 +204,12 @@ export const updateWorkspaceByIdService = async (
       "workspace_embeddings",
       workspace._id.toString(),
       `${workspace.name} ${workspace.description || ""}`,
-      { name, description }
+      {
+        type: "WORKSPACE",
+        name: workspace.name,
+        ownerId: workspace.owner,
+        description: workspace.description,
+      }
     );
   }
 
