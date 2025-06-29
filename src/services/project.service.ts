@@ -38,7 +38,7 @@ export const createProjectService = async (
       name: body.name,
       description: body.description,
       workspace: workspaceId,
-      createdBy: userId,
+      ownerId: userId,
     }
   );
 
@@ -188,7 +188,7 @@ export const updateProjectSevice = async (
         name: project.name,
         description: project.description,
         workspace: workspaceId,
-        createdBy: project.createdBy,
+        ownerId: project.createdBy,
       }
     );
   }

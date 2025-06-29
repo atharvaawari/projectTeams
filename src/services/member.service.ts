@@ -8,6 +8,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from "../utils/appError";
+import { safeUpsertEmbedding } from "../utils/embeddingUtils";
 
 export const getMemberRoleInWorkspace = async (
   userId: string,
@@ -50,7 +51,8 @@ export const joinWorkspaceByInviteService = async (
     workspaceId: workspace._id,
   }).exec();
 
-  if (existingMember) throw new BadRequestException("You are already a member of this workspace");
+  if (existingMember)
+    throw new BadRequestException("You are already a member of this workspace");
 
   const role = await RoleModel.findOne({ name: Roles.MEMBER });
 
@@ -62,6 +64,20 @@ export const joinWorkspaceByInviteService = async (
     role: role._id,
   });
   await newMember.save();
+
+  if (!newMember._id) throw new NotFoundException("member id is missing");
+
+  safeUpsertEmbedding(
+    "member_embeddings",
+    newMember._id?.toString(),
+    role.name,
+    {
+      type: "MEMBER",
+      workspaceId: workspace._id?.toString(),
+      role: role.name,
+      ownerId: userId,
+    }
+  );
 
   return { workspaceId: workspace._id, role: role.name };
 };

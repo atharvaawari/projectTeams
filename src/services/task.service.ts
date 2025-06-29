@@ -68,7 +68,7 @@ export const createTaskService = async (
       projectId: projectId.toString(),
       status,
       priority,
-      createdBy: userId.toString(),
+      ownerId: userId.toString(),
       assignedTo: assignedTo?.toString(),
     }
   ).catch((e) => console.error("Task embedding failed:", e));
@@ -127,7 +127,7 @@ export const updateTaskService = async (
         projectId: projectId.toString(),
         status: updatedTask.status,
         priority: updatedTask.priority,
-        createdBy: updatedTask.createdBy.toString(),
+        ownerId: updatedTask.createdBy.toString(),
         assignedTo: updatedTask.assignedTo?.toString(),
       }
     ).catch((e) => console.error("Task embedding update failed:", e));

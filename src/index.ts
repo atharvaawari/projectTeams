@@ -7,8 +7,6 @@ import connectDatabase from "./config/database.config";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
 import { HTTPSTATUS } from "./config/http.config";
 import { asyncHandler } from "./middlewares/asyncHandler.middleware";
-import { BadRequestException } from "./utils/appError";
-import { ErrorCodeEnum } from "./enums/error-code.enum";
 
 import "./config/passport.config";
 import passport from "passport";
@@ -21,9 +19,11 @@ import memberRoute from "./routes/member.route";
 import projectRoute from "./routes/project.route";
 import taskRoutes from "./routes/task.route";
 import chatRouter from "./routes/aichat.route";
-import { initQdrantCollection, qdrantClient, resetCollection, } from "./config/qdrant";
-import WorkspaceModel from "./models/workspace.model";
-import mongoose from "mongoose";
+import {
+  initQdrantCollection,
+  qdrantClient,
+  resetCollection,
+} from "./config/qdrant";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -80,13 +80,32 @@ connectDatabase().then(() => {
 });
 
 async function createQdrantDBcollections() {
+
   initQdrantCollection("workspace_embeddings");
   initQdrantCollection("task_embeddings");
   initQdrantCollection("project_embeddings");
+  initQdrantCollection("member_embeddings");
 
-  // await WorkspaceModel.deleteMany({ owner: new mongoose.Types.ObjectId("680c5361feb129305a7027af") });
-
+  // await qdrantClient.createPayloadIndex("workspace_embeddings", {
+  //   field_name: "ownerId",
+  //   field_schema: "keyword",
+  //   wait: true,
+  // });
+  // await qdrantClient.createPayloadIndex("task_embeddings", {
+  //   field_name: "ownerId",
+  //   field_schema: "keyword",
+  //   wait: true,
+  // });
+  // await qdrantClient.createPayloadIndex("project_embeddings", {
+  //   field_name: "ownerId",
+  //   field_schema: "keyword",
+  //   wait: true,
+  // });
+  // await qdrantClient.createPayloadIndex("member_embeddings", {
+  //   field_name: "ownerId",
+  //   field_schema: "keyword", 
+  //   wait: true,
+  // });
 }
 
 createQdrantDBcollections();
-

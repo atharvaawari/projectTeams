@@ -7,6 +7,7 @@ export const qdrantClient = new QdrantClient({
   apiKey: config.QDRANT_API_KEY, // Optional (for cloud Qdrant)
 });
 
+
 //init Collection
 export const initQdrantCollection = async (collectionName: string) => {
   try {
@@ -67,5 +68,48 @@ export const resetCollection = async (
     console.log(`✅ Collection ${collectionName} has been reset.`);
   } catch (error) {
     console.error(`❌ Failed to reset collection ${collectionName}:`, error);
+  }
+};
+
+// Type guard for Qdrant conflict errors
+function isQdrantConflictError(error: unknown): error is { status: number } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    error.status === 409
+  );
+}
+
+const setupCollections = async () => {
+  const collections = ["workspaces", "projects", "tasks"];
+
+  for (const collection of collections) {
+    try {
+      // 1. Try creating collection (may fail if exists)
+      await qdrantClient.createCollection(collection, {
+        vectors: { size: 1536, distance: "Cosine" },
+      });
+      console.log(`Created collection: ${collection}`);
+    } catch (error) {
+      if (isQdrantConflictError(error)) {
+        console.log(`Collection already exists: ${collection}`);
+      } else {
+        throw error; // Re-throw unexpected errors
+      }
+    }
+
+    try {
+      // 2. Try creating index (idempotent operation)
+      await qdrantClient.createPayloadIndex(collection, {
+        field_name: "ownerId",
+        field_schema: "keyword",
+        wait: true,
+      });
+      console.log(`Ensured index exists for ownerId in ${collection}`);
+    } catch (error) {
+      console.error(`Failed creating index for ${collection}:`, error);
+      throw error;
+    }
   }
 };

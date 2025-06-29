@@ -181,6 +181,20 @@ export const changeMemberRoleService = async (
   member.role = role;
   await member.save();
 
+  if (!member._id) throw new NotFoundException("member id is missing");
+
+  safeUpsertEmbedding(
+    "member_embeddings",
+    member._id.toString(),
+    member.role.name,
+    {
+      type: "MEMBER",
+      workspaceId: workspace._id?.toString(),
+      role: member.role.name,
+      ownerId: member._id.toString(),
+    }
+  );
+
   return { member };
 };
 
@@ -245,9 +259,11 @@ export const deleteWorkspaceByIdService = async (
 
     if (!workspace?._id) throw new NotFoundException("Missing Workspace id");
 
-    safeDeleteEmbedding("workspace_embeddings", workspace._id.toString()).catch(()=>{
-      throw new BadRequestException("Delete Embeddings failed");
-    }); //deleting embedding from qdrant
+    safeDeleteEmbedding("workspace_embeddings", workspace._id.toString()).catch(
+      () => {
+        throw new BadRequestException("Delete Embeddings failed");
+      }
+    ); //deleting embedding from qdrant
 
     await ProjectModel.deleteMany({ workspace: workspace._id }).session(
       session

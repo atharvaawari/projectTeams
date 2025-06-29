@@ -1,67 +1,96 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
-import { getRelevantContext } from "../utils/getRelevantContext";
 import { NotFoundException } from "../utils/appError";
-import { extractJsonFromText } from "../utils/extractJsonFromText";
+import OpenAI from "openai";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { searchVectorDB } from "../utils/vectorSearch";
 
-// Define all possible query types
-const QueryTypeSchema = z.enum([
-  "PENDING_TASKS",
-  "PROJECT_DETAILS",
-  "TEAM_MEMBERS",
-  "UPCOMING_DEADLINES",
-  "GENERAL_HELP",
-]);
+// Define types for better type safety
+interface SearchResult {
+  id: string;
+  score: number;
+  payload: {
+    mongoId: string;
+    collection?: string;
+    [key: string]: any;
+  };
+  text: string;
+}
 
-const ResponseSchema = z.object({
-  answer: z.string(),
-  deeplink: z.string().optional(),
-  queryType: QueryTypeSchema,
-});
+interface AIResponse {
+  answer: string;
+  sources: Array<{
+    id: string;
+    collection?: string;
+    text: string;
+    score: number;
+  }>;
+}
 
-export const handleWorkspaceQueryService = async (
+export const getAiResponseService = async (
   query: string,
   userId: string,
-  workspaceId: string
+  collections: string[] = ["workspace_embeddings", "project_embeddings", "task_embeddings", "member_embeddings"]
 ) => {
-  //step 1: Classify query and fetch context
-  //step 2: Generate structured prompt
-  //step 3: Validate and return
+  if (!query) throw new NotFoundException("Query not Found");
 
-  const context = await getRelevantContext(query, workspaceId);
+  try {
+    // Initialize LangChain's ChatOpenAI
+    const model = new ChatOpenAI({
+      modelName: "gpt-3.5-turbo", // or "gpt-4" if available
+      temperature: 0.7,
+      maxRetries: 3,
+    });
 
-  if (!context) throw new NotFoundException("User data context not found");
+    // Search all relevant collections
+    const searchPromises = collections.map((collection) =>
+      searchVectorDB(query, collection, userId)
+    );
 
-  const prompt = `
-    You're an AI for a project management app. Respond to workspace queries.
-    
-    User Context:
-    - Workspace ID: ${workspaceId}
-    - Relevant Data: ${JSON.stringify(context, null, 2)}
-    
-    Query: "${query}"
-    
-    Respond with:
-    1. Natural language answer
-    2. Deeplink (if applicable)
-    3. Query type (${QueryTypeSchema.options.join("|")})
-    
-    Example:
+    const allResults = await Promise.all(searchPromises);
 
-    {
-      "answer": "Project 'Website Redesign' has 3 pending tasks",
-      "deeplink": "/workspace/${workspaceId}/projects/proj123/tasks?status=TODO",
-      "queryType": "PENDING_TASKS"
-    }
-  `;
+    // Combine and sort results by score
+    const combinedResults = allResults
+      .flat()
+      .sort((a , b) => b.score - a.score)
+      .slice(0, 5); // Take top 5 overall
 
-  const llm = new ChatOpenAI({
-    modelName: "gpt-3.5-turbo",
-    temperature: 0.3,
-  });
+    // Prepare context for LLM
+    const context = combinedResults
+      .map(
+        (result) =>
+          `From ${result.payload?.mongoId} (${result.score.toFixed(2)}): ${
+            result.text
+          }`
+      )
+      .join("\n\n");
 
-  const rawResponse = await llm.invoke(prompt);
-   const jsonString = extractJsonFromText(rawResponse.content.toString());
+      console.log("context", context );
 
-  return ResponseSchema.parse(JSON.parse(jsonString));
+    // // Call LLM with the context using LangChain
+    // const response = await model.invoke([
+    //   new SystemMessage(
+    //     `You are a helpful project management assistant. Use the following context to answer the user's question. 
+    //     If you don't know the answer, say so.
+        
+    //     Context:
+    //     ${context}`
+    //   ),
+    //   new HumanMessage(query),
+    // ]);
+
+    // return {
+    //   answer: response.content.toString() || "I couldn't generate a response.",
+    //   sources: combinedResults.map((result) => ({
+    //     id: result.payload?.mongoId,
+    //     collection: collections.find(
+    //       (collection) => result.payload?.collection === collection
+    //     ),
+    //     text: result.text,
+    //     score: result.score,
+    //   })),
+    // };
+  } catch (error) {
+    console.error("AI response generation failed:", error);
+  }
 };
