@@ -59,10 +59,15 @@ export const createWorkspaceService = async (
   if (!workspace?._id) throw new NotFoundException("Missing Workspace id");
 
   safeUpsertEmbedding(
-    "workspace_embeddings",
+    "project_teams_embeddings",
     workspace._id.toString(),
     `${name} ${description || ""}`,
-    { type: "WORKSPACE", ownerId: userId, name, description }
+    {
+      type: "WORKSPACE",
+      ownerId: userId,
+      name,
+      description,
+    }
   ).catch(() => {});
 
   return {
@@ -184,7 +189,7 @@ export const changeMemberRoleService = async (
   if (!member._id) throw new NotFoundException("member id is missing");
 
   safeUpsertEmbedding(
-    "member_embeddings",
+    "project_teams_embeddings",
     member._id.toString(),
     member.role.name,
     {
@@ -215,7 +220,7 @@ export const updateWorkspaceByIdService = async (
 
   if (name || description) {
     safeUpsertEmbedding(
-      "workspace_embeddings",
+      "project_teams_embeddings",
       workspace._id.toString(),
       `${workspace.name} ${workspace.description || ""}`,
       {
@@ -259,7 +264,7 @@ export const deleteWorkspaceByIdService = async (
 
     if (!workspace?._id) throw new NotFoundException("Missing Workspace id");
 
-    safeDeleteEmbedding("workspace_embeddings", workspace._id.toString()).catch(
+    safeDeleteEmbedding("project_teams_embeddings", workspace._id.toString()).catch(
       () => {
         throw new BadRequestException("Delete Embeddings failed");
       }
@@ -316,7 +321,7 @@ export const searchWorkspacesService = async (
     const queryEmbedding = await embeddings.embedQuery(query);
 
     // 3. Search Qdrant
-    const searchResult = await qdrantClient.search("workspace_embeddings", {
+    const searchResult = await qdrantClient.search("project_teams_embeddings", {
       vector: queryEmbedding,
       filter: {
         must: [

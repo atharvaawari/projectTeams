@@ -80,11 +80,17 @@ connectDatabase().then(() => {
 });
 
 async function createQdrantDBcollections() {
+  initQdrantCollection("project_teams_embeddings");
 
-  initQdrantCollection("workspace_embeddings");
-  initQdrantCollection("task_embeddings");
-  initQdrantCollection("project_embeddings");
-  initQdrantCollection("member_embeddings");
+  // await qdrantClient.createPayloadIndex("project_teams_embeddings", {
+  //   field_name: "ownerId",
+  //   field_schema: "keyword",
+  // });
+
+  // initQdrantCollection("workspace_embeddings");
+  // initQdrantCollection("task_embeddings");
+  // initQdrantCollection("project_embeddings");
+  // initQdrantCollection("member_embeddings");
 
   // await qdrantClient.createPayloadIndex("workspace_embeddings", {
   //   field_name: "ownerId",
@@ -103,7 +109,7 @@ async function createQdrantDBcollections() {
   // });
   // await qdrantClient.createPayloadIndex("member_embeddings", {
   //   field_name: "ownerId",
-  //   field_schema: "keyword", 
+  //   field_schema: "keyword",
   //   wait: true,
   // });
 }

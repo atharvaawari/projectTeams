@@ -3,7 +3,7 @@ import { asyncHandler } from "../middlewares/asyncHandler.middleware";
 import { askAI } from "../services/llm.service";
 import { HTTPSTATUS } from "../config/http.config";
 import { handleQuerySchema, handleWorkspaceQuerySchema } from "../validation/llm.validation";
-import { handleWorkspaceQueryService } from "../services/ai.2service";
+import { handleWorkspaceQueryService } from "../services/ai.service";
 
 export const handleUserQuerry = asyncHandler(
   async (req: Request, res: Response) => {

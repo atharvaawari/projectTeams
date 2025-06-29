@@ -30,7 +30,7 @@ export const createProjectService = async (
   if (!project._id) throw new NotFoundException("missing project id");
 
   safeUpsertEmbedding(
-    "project_embeddings",
+    "project_teams_embeddings",
     project._id.toString(),
     `${body.name} ${body.description || ""}`,
     {
@@ -180,7 +180,7 @@ export const updateProjectSevice = async (
 
   if (emoji || name || description) {
     safeUpsertEmbedding(
-      "project_embeddings",
+      "project_teams_embeddings",
       project._id.toString(),
       `${project.name} ${project.description || ""}`,
       {
@@ -213,7 +213,7 @@ export const deleteProjectService = async (
   if (!project._id) throw new NotFoundException("project id is missing");
 
   // Delete the associated embedding
-  safeDeleteEmbedding("project_embeddings", project._id.toString()).catch((e) =>
+  safeDeleteEmbedding("project_teams_embeddings", project._id.toString()).catch((e) =>
     console.error("Task embedding deletion failed:", e)
   );
 

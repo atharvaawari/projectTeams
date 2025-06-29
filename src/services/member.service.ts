@@ -10,6 +10,7 @@ import {
 } from "../utils/appError";
 import { safeUpsertEmbedding } from "../utils/embeddingUtils";
 
+
 export const getMemberRoleInWorkspace = async (
   userId: string,
   workspaceId: string
@@ -68,7 +69,7 @@ export const joinWorkspaceByInviteService = async (
   if (!newMember._id) throw new NotFoundException("member id is missing");
 
   safeUpsertEmbedding(
-    "member_embeddings",
+    "project_teams_embeddings",
     newMember._id?.toString(),
     role.name,
     {

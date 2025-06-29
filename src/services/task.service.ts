@@ -59,7 +59,7 @@ export const createTaskService = async (
   if (!task._id) throw new NotFoundException("task id is missing");
 
   safeUpsertEmbedding(
-    "task_embeddings",
+    "project_teams_embeddings",
     task._id.toString(),
     `${title} ${description || ""}`.trim(),
     {
@@ -118,7 +118,7 @@ export const updateTaskService = async (
   // Update embedding if title/description changed
   if (body.title || body.description) {
     safeUpsertEmbedding(
-      "task_embeddings",
+      "project_teams_embeddings",
       taskId.toString(),
       `${updatedTask.title} ${updatedTask.description || ""}`.trim(),
       {
@@ -238,7 +238,7 @@ export const deleteTaskService = async (
   if(!task._id) throw new NotFoundException("No task id found");
 
   // Delete the associated embedding
-  safeDeleteEmbedding("task_embeddings", task._id.toString()).catch((e) =>
+  safeDeleteEmbedding("project_teams_embeddings", task._id.toString()).catch((e) =>
     console.error("Task embedding deletion failed:", e)
   );
 

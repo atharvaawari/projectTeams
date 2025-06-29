@@ -18,6 +18,7 @@ const appConfig = ()=>({
   OPENAI_API_KEY:getEnv("OPENAI_API_KEY"),
   QDRANT_URL:getEnv("QDRANT_URL"),
   QDRANT_API_KEY:getEnv("QDRANT_API_KEY"),
+  UUIDNAMESPACE:getEnv("UUIDNAMESPACE"),
 })
 
 export const config = appConfig();
