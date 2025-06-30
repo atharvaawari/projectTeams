@@ -23,6 +23,7 @@ interface AIResponse {
     text: string;
     score: number;
   }>;
+  suggestedActions?: string[];
 }
 
 // Define types for the AI response
@@ -33,10 +34,10 @@ interface AISource {
   score: number;
 }
 
-interface AIResponse {
-  answer: string;
-  sources: AISource[];
-}
+// interface AIResponse {
+//   answer: string;
+//   sources: AISource[];
+// }
 
 export const getAiResponseService = async (
   query: string,
@@ -50,7 +51,8 @@ export const getAiResponseService = async (
     const model = new ChatOpenAI({
       modelName: "gpt-3.5-turbo", 
       temperature: 0.7,
-      maxRetries: 3,
+      maxTokens: 1024,
+      maxRetries: 2,
     });
 
     // Search all relevant collections
@@ -75,8 +77,6 @@ export const getAiResponseService = async (
           }`
       )
       .join("\n\n");
-
-    console.log("context", context);
 
     // Call LLM with the context using LangChain
     const response = await model.invoke([
@@ -104,8 +104,13 @@ export const getAiResponseService = async (
   } catch (error) {
     console.error("AI response generation failed:", error);
     return {
-      answer: "Sorry, I couldn't process your request at this time.",
+      answer: "I'm having trouble accessing that information right now. Please try again later or be more specific with your request.",
       sources: [],
+      suggestedActions: [
+        "Try rephrasing your question",
+        "Specify a time frame (e.g., 'this week')",
+        "Mention specific projects or team members"
+      ]
     };
   }
 };

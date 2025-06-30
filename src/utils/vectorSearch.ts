@@ -5,7 +5,7 @@ export const searchVectorDB = async (
   query: string,
   collection: string,
   ownerId: string,
-  limit: number = 5
+  limit: number = 7
 ) => {
   try {
     // Generate embedding for the query
