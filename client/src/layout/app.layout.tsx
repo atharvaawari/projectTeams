@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AuthProvider } from "@/context/auth-provider";
 import Asidebar from "@/components/asidebar/asidebar";
-import RightSidebar from "@/components/rightSidebar/RightSidebar";
+import ChatWidget from "@/components/rightSidebar/ChatWidget";
 import Header from "@/components/header";
 import CreateWorkspaceDialog from "@/components/workspace/create-workspace-dialog";
 import CreateProjectDialog from "@/components/workspace/project/create-project-dialog";
@@ -32,7 +32,7 @@ const AppLayout = () => {
         </SidebarInset>
         
       </SidebarProvider>
-      <RightSidebar
+      <ChatWidget
           isOpen={isRightSidebarOpen}
           onClose={() => setIsRightSidebarOpen(false)}
         />
@@ -40,7 +40,7 @@ const AppLayout = () => {
       {/* AI Chat Button and Box */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
         <Button
-          onClick={() => setIsRightSidebarOpen(true)}
+          onClick={() => setIsRightSidebarOpen((isOpen)=> !isOpen )}
           className="rounded-full w-12 h-12 p-0"
         >
           <MessageSquare className="w-5 h-5" />
