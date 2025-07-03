@@ -11,6 +11,7 @@ export interface UserDocument extends Document {
   createdAt: Date;
   updatedAt: Date;
   currentWorkSpace: mongoose.Types.ObjectId | null;
+  chats: mongoose.Types.ObjectId[];
   comparePassward(value: string): Promise<boolean>;
   omitPassword(): Omit<UserDocument, "password">;
 }
@@ -29,9 +30,9 @@ const userSchema = new Schema<UserDocument>(
       trim: true,
       lowercase: true,
     },
-    password: { 
-      type: String, 
-      select: true 
+    password: {
+      type: String,
+      select: true,
     },
     profilePicture: {
       type: String,
@@ -41,6 +42,12 @@ const userSchema = new Schema<UserDocument>(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Workspace",
     },
+    chats: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Chat",
+      },
+    ],
     isActive: { type: Boolean, default: true },
     lastlogin: { type: Date, default: null },
   },
