@@ -7,8 +7,6 @@ import connectDatabase from "./config/database.config";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
 import { HTTPSTATUS } from "./config/http.config";
 import { asyncHandler } from "./middlewares/asyncHandler.middleware";
-import { BadRequestException } from "./utils/appError";
-import { ErrorCodeEnum } from "./enums/error-code.enum";
 
 import "./config/passport.config";
 import passport from "passport";
@@ -20,6 +18,13 @@ import workspaceRoute from "./routes/workspace.route";
 import memberRoute from "./routes/member.route";
 import projectRoute from "./routes/project.route";
 import taskRoutes from "./routes/task.route";
+import aiRouter from "./routes/ai.route";
+import {
+  initQdrantCollection,
+  qdrantClient,
+  resetCollection,
+} from "./config/qdrant";
+import chatRouter from "./routes/chat.route";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -63,7 +68,8 @@ app.use(`${BASE_PATH}/workspace`, isAuthenticated, workspaceRoute);
 app.use(`${BASE_PATH}/member`, isAuthenticated, memberRoute);
 app.use(`${BASE_PATH}/project`, isAuthenticated, projectRoute);
 app.use(`${BASE_PATH}/task`, isAuthenticated, taskRoutes);
-
+app.use(`${BASE_PATH}/ai`, isAuthenticated, aiRouter);
+app.use(`${BASE_PATH}/chats`, isAuthenticated, chatRouter);
 
 app.use(errorHandler);
 
@@ -74,3 +80,40 @@ connectDatabase().then(() => {
     );
   });
 });
+
+async function createQdrantDBcollections() {
+  initQdrantCollection("project_teams_embeddings");
+
+  // await qdrantClient.createPayloadIndex("project_teams_embeddings", {
+  //   field_name: "ownerId",
+  //   field_schema: "keyword",
+  // });
+
+  // initQdrantCollection("workspace_embeddings");
+  // initQdrantCollection("task_embeddings");
+  // initQdrantCollection("project_embeddings");
+  // initQdrantCollection("member_embeddings");
+
+  // await qdrantClient.createPayloadIndex("workspace_embeddings", {
+  //   field_name: "ownerId",
+  //   field_schema: "keyword",
+  //   wait: true,
+  // });
+  // await qdrantClient.createPayloadIndex("task_embeddings", {
+  //   field_name: "ownerId",
+  //   field_schema: "keyword",
+  //   wait: true,
+  // });
+  // await qdrantClient.createPayloadIndex("project_embeddings", {
+  //   field_name: "ownerId",
+  //   field_schema: "keyword",
+  //   wait: true,
+  // });
+  // await qdrantClient.createPayloadIndex("member_embeddings", {
+  //   field_name: "ownerId",
+  //   field_schema: "keyword",
+  //   wait: true,
+  // });
+}
+
+createQdrantDBcollections();

@@ -15,6 +15,7 @@ import {
   getWorkspaceAnalyticsService,
   getWorkspaceByIdService,
   getWorkspaceMemberService,
+  searchWorkspacesService,
   updateWorkspaceByIdService,
 } from "../services/workspace.service";
 import { getMemberRoleInWorkspace } from "../services/member.service";
@@ -164,6 +165,20 @@ export const deleteWorkspaceByIdcontroller = asyncHandler(
     return res.status(HTTPSTATUS.OK).json({
       message: "Workspace deleted successfully",
       currentWorkSpace,
+    });
+  }
+);
+
+export const searchWorkspacesController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const query = req.query.q as string;
+    const userId = req.user?._id;
+
+    const { workspaces } = await searchWorkspacesService(query, userId);
+
+    return res.status(HTTPSTATUS.OK).json({
+      message: "Semantic workspace search results",
+      workspaces,
     });
   }
 );

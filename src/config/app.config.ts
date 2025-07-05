@@ -15,6 +15,10 @@ const appConfig = ()=>({
 
   FRONTEND_ORIGIN: getEnv("FRONTEND_ORIGIN", "localhost"),
   FRONTEND_GOOGLE_CALLBACK_URL: getEnv("FRONTEND_GOOGLE_CALLBACK_URL"),
+  OPENAI_API_KEY:getEnv("OPENAI_API_KEY"),
+  QDRANT_URL:getEnv("QDRANT_URL"),
+  QDRANT_API_KEY:getEnv("QDRANT_API_KEY"),
+  UUIDNAMESPACE:getEnv("UUIDNAMESPACE"),
 })
 
 export const config = appConfig();
