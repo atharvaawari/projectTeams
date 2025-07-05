@@ -52,3 +52,48 @@ export const getUserChatsSerive = async (userId: string) => {
 
     return { chats};
 };
+
+export const getChatByIdService = async (chatId: string, userId: string) => {
+
+  if(!chatId) throw new NotFoundException("chatId not found");
+
+  const chat = await ChatModel.findOne({
+    _id: chatId,
+    user: userId
+  })
+    .populate("project", "title");
+
+  if (!chat) {
+    throw new NotFoundException("Chat not found");
+  }
+
+  return { chat };
+};
+
+export const addMessageToChatService = async (
+  chatId: string,
+  userId: string,
+  role: string,
+  content: string,
+  sources?: { title: string; url: string; score?: number }[] // Optional sources for AI responses
+) => {
+
+  if (!chatId) throw new NotFoundException("chatId not found");
+
+  const chat = await ChatModel.findOneAndUpdate(
+    { _id: chatId, user: userId }, // Ensure chat belongs to user
+    { 
+      $push: { 
+        messages: { 
+          role, 
+          content, 
+          ...(sources && { sources }) // Conditionally add sources
+        } 
+      }
+    },
+    { new: true }
+  ).populate("project", "title");
+
+  if (!chat) throw new NotFoundException("Chat not found");
+  return { chat };
+};

@@ -69,7 +69,7 @@ app.use(`${BASE_PATH}/member`, isAuthenticated, memberRoute);
 app.use(`${BASE_PATH}/project`, isAuthenticated, projectRoute);
 app.use(`${BASE_PATH}/task`, isAuthenticated, taskRoutes);
 app.use(`${BASE_PATH}/ai`, isAuthenticated, aiRouter);
-app.use(`${BASE_PATH}/chat`, isAuthenticated, chatRouter);
+app.use(`${BASE_PATH}/chats`, isAuthenticated, chatRouter);
 
 app.use(errorHandler);
 
