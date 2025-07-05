@@ -5,6 +5,8 @@ import UserModel from "../models/user.model";
 import WorkspaceModel from "../models/workspace.model";
 import ChatModel from "../models/chat.model";
 
+
+//Create chat service
 export const createChatService = async (
   userId: string,
   workspaceId?: string,
@@ -41,6 +43,7 @@ export const createChatService = async (
   return { chat };
 };
 
+//Get user chats service
 export const getUserChatsSerive = async (userId: string) => {
 
   if(!userId) throw new NotFoundException("userId not found!");
@@ -53,6 +56,7 @@ export const getUserChatsSerive = async (userId: string) => {
     return { chats};
 };
 
+//Get chat by Id
 export const getChatByIdService = async (chatId: string, userId: string) => {
 
   if(!chatId) throw new NotFoundException("chatId not found");
@@ -70,6 +74,7 @@ export const getChatByIdService = async (chatId: string, userId: string) => {
   return { chat };
 };
 
+//Add message to Chat
 export const addMessageToChatService = async (
   chatId: string,
   userId: string,
