@@ -280,3 +280,34 @@ export type AllTaskResponseType = {
   tasks: TaskType[];
   pagination: PaginationType;
 };
+
+export type message = {
+  content: string;
+  role: string;
+  _id: string;
+  timestamp: string;
+  sources: [];
+};
+
+export type ChatType = {
+  _id: string;
+  user: string;
+  title: string;
+  isPinned: string;
+  tags: [];
+  messages: message[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ChatResponseType = {
+  message: string;
+  data: ChatType;
+};
+
+export type AllChatsResponseType = {
+  message: string;
+  data: {
+    chats: ChatType[];
+  };
+};

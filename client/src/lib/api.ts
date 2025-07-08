@@ -1,5 +1,6 @@
 import API from "./axios-client";
 import {
+  AllChatsResponseType,
   AllMembersInWorkspaceResponseType,
   AllProjectPayloadType,
   AllProjectResponseType,
@@ -8,6 +9,8 @@ import {
   AllWorkspaceResponseType,
   AnalyticsResponseType,
   ChangeWorkspaceMemberRoleType,
+  ChatResponseType,
+  ChatType,
   CreateProjectPayloadType,
   CreateTaskPayloadType,
   CreateWorkspaceResponseType,
@@ -36,7 +39,8 @@ export const registerMutationFn = async (data: registerType) =>
 
 export const logoutMutationFn = async () => await API.post("auth/logout");
 
-export const getCurrentUserQueryFn = async (): Promise<CurrentUserResponseType> => {
+export const getCurrentUserQueryFn =
+  async (): Promise<CurrentUserResponseType> => {
     const response = await API.get(`/user/current`);
     return response.data;
   };
@@ -257,11 +261,41 @@ export const deleteTaskMutationFn = async ({
   return response.data;
 };
 
+//*******AI********************************
+
 export const aiQueryMutationFn = async (query: string) => {
   const response = await API.post(`/ai/query`, { query });
+  return response.data.data;
+};
+
+//*******CHATS********************************
+
+export const createChatMutationFn = async (
+  title: string
+): Promise<ChatType> => {
+  const response = await API.post(`chats/create`, { title });
   return response.data;
 };
 
-export const aiWorkspaceQueryMutationFn = async (query : string) => {
-  
+export const addMessageToChatMutationFn = async (
+  data: {
+    content: string;
+    role: string;
+  },
+  chatId: string
+) => {
+  const response = await API.post(`chats/chat/${chatId}/message`, { data });
+  return response.data;
+};
+
+export const getAllChatsQueryFn = async (): Promise<AllChatsResponseType> => {
+  const response = await API.get(`chats/get`);
+  return response.data;
+};
+
+export const getChatByIdQueryFn = async (
+  chatId: string
+): Promise<ChatResponseType> => {
+  const response = await API.get(`chats/chat/${chatId}`);
+  return response.data;
 };

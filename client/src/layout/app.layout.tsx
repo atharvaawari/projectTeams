@@ -7,8 +7,8 @@ import Header from "@/components/header";
 import CreateWorkspaceDialog from "@/components/workspace/create-workspace-dialog";
 import CreateProjectDialog from "@/components/workspace/project/create-project-dialog";
 import { useState } from "react";
-import { Button } from "@/components/ui/button"; // Assuming you're using shadcn/ui
-import { MessageSquare } from "lucide-react"; // Or any other chat icon you prefer
+import { Button } from "@/components/ui/button"; 
+import { MessageSquare } from "lucide-react";
 
 const AppLayout = () => {
 
@@ -38,7 +38,7 @@ const AppLayout = () => {
         />
 
       {/* AI Chat Button and Box */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+      <div className="fixed bottom-6 right-6 z-10 flex flex-col items-end gap-2">
         <Button
           onClick={() => setIsRightSidebarOpen((isOpen)=> !isOpen )}
           className="rounded-full w-12 h-12 p-0"

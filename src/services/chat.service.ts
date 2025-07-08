@@ -14,7 +14,7 @@ export const createChatService = async (
   title?: string
 ) => {
   const chat = new ChatModel({
-    userId: userId,
+    user: userId,
     workspace: workspaceId || undefined,
     project: projectId || undefined,
     title: title || "New Chat",
