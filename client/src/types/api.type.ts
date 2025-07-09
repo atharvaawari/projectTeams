@@ -281,13 +281,20 @@ export type AllTaskResponseType = {
   pagination: PaginationType;
 };
 
+export type Source = {
+  id: string;
+  text: string;
+  score: number;
+}
+
 export type message = {
   content: string;
   role: string;
   _id: string;
   timestamp: string;
-  sources: [];
+  sources: Source[];
 };
+
 
 export type ChatType = {
   _id: string;
@@ -298,6 +305,7 @@ export type ChatType = {
   messages: message[];
   createdAt: string;
   updatedAt: string;
+  sources?: Source[];
 };
 
 export type ChatResponseType = {

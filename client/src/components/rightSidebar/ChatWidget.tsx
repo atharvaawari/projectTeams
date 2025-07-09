@@ -2,32 +2,19 @@ import { X, Send, Loader, FileText, Sparkles, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { aiQueryMutationFn } from "@/lib/api";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  aiQueryMutationFn,
+  getAllChatsQueryFn,
+  getChatByIdQueryFn,
+} from "@/lib/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  addMessageToChatMutationFn,
-  createChatMutationFn,
-  getAllChatsQueryFn,
-  getChatByIdQueryFn,
-} from "../../lib/api";
-
-const formSchema = z.object({
-  query: z.string().min(1, "Query cannot be empty"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-type Source = {
-  id: string;
-  text: string;
-  score?: number;
-};
+import { Source } from "@/types/api.type";
 
 type ApiResponse = {
   answer: string;
@@ -39,11 +26,7 @@ type Message = {
   content: string;
   role: "user" | "assistant";
   timestamp: Date;
-  sources?: {
-    title: string;
-    id: string;
-    score?: number;
-  }[];
+  sources?: Source[];
   isTyping?: boolean;
 };
 
@@ -53,77 +36,87 @@ type ChatWidgetProps = {
   projectId?: string;
 };
 
-const ChatWidget = ({ isOpen, onClose, projectId }: ChatWidgetProps) => {
-  const queryClient = useQueryClient();
+const formSchema = z.object({
+  query: z.string().min(1, "Query cannot be empty"),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+const SAMPLE_CHAT_HISTORY: Message[] = [
+  {
+    id: "1",
+    content: "Hello! I'm your AI assistant. How can I help you today?",
+    role: "assistant",
+    timestamp: new Date(),
+  },
+  {
+    id: "2",
+    content: "Hello! I'm your user. what is project name?",
+    role: "user",
+    timestamp: new Date(),
+  },
+];
+
+const ChatWidget = ({ isOpen, onClose }: ChatWidgetProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<Message[]>(SAMPLE_CHAT_HISTORY);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [activeChat, setActiveChat] = useState<string | null>(null);
-  const [typingMessage, setTypingMessage] = useState<Message | null>(null);
 
-  // Fetch all chats
-  const { data: chatsData } = useQuery({
-    queryKey: ["chats"],
-    queryFn: getAllChatsQueryFn,
-    enabled: isOpen,
+  const { data: chatsData, isLoading: chatsIsLoading } = useQuery({
+    queryKey: ["all-chats"],
+    queryFn: () => getAllChatsQueryFn(),
+    staleTime: 0,
   });
 
-  // console.log("chatsData", chatsData?.data.chats[0]);
+  const getMostRecentChatId = (chats: any[]): string | null => {
+    if (!chats || chats.length === 0) return null;
+    const sorted = [...chats].sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+    return sorted[0]._id;
+  };
 
-  // Fetch active chat messages
-  const { data: activeChatData, refetch: refetchActiveChat } = useQuery({
-    queryKey: ["chat", activeChat],
-    queryFn: () => (activeChat ? getChatByIdQueryFn(activeChat) : null),
-    enabled: isOpen && !!activeChat,
+  const recentChatId = getMostRecentChatId(chatsData?.data.chats || []);
+
+  // Set the most recent chat as active on initial load
+  useEffect(() => {
+    if (recentChatId && !activeChat) {
+      setActiveChat(recentChatId);
+    }
+  }, [recentChatId]);
+
+  //get chat by Id
+  const { data: activeChatData, isLoading: activeChatIsLoading } = useQuery({
+    queryKey: ["singleChat", activeChat],
+    queryFn: () => getChatByIdQueryFn(activeChat!),
+    enabled: !!activeChat, // Only fetch if recentChatId exists
+    staleTime: Infinity,
   });
 
-  // Convert API data to local message format
-  const messages = activeChatData?.data?.messages
-    ? [
-        ...activeChatData.data.messages.map((msg) => ({
-          id: msg._id,
-          content: msg.content,
-          role: msg.role as "user" | "assistant",
-          timestamp: new Date(msg.timestamp),
-          sources: msg.sources,
+  //format data
+  useEffect(() => {
+    if (activeChatData?.data) {
+      const formattedMessages = activeChatData.data.messages.map((msg) => ({
+        id: msg._id,
+        content: msg.content || "",
+        role: msg.role as "user" | "assistant",
+        timestamp: new Date(msg.timestamp),
+        sources: msg.sources?.map((src) => ({
+          text: src.text,
+          id: src.id,
+          score: src.score,
         })),
-        ...(typingMessage ? [typingMessage] : []),
-      ]
-    : typingMessage
-    ? [typingMessage]
-    : [];
+      }));
+      setMessages(
+        formattedMessages.length > 0 ? formattedMessages : SAMPLE_CHAT_HISTORY
+      );
+    }
+  }, [activeChatData]);
 
-  // Create new chat mutation
-  const { mutate: createChat } = useMutation({
-    mutationFn: createChatMutationFn,
-    onSuccess: (data) => {
-      setActiveChat(data._id);
-      queryClient.invalidateQueries({ queryKey: ["chats"] });
-    },
-  });
-
-  // Add message to chat mutation
-  const { mutate: addMessage } = useMutation({
-    mutationFn: ({
-      chatId,
-      content,
-      role,
-    }: {
-      chatId: string;
-      content: string;
-      role: string;
-    }) => addMessageToChatMutationFn({ content, role }, chatId),
-    onSuccess: () => {
-      refetchActiveChat();
-      queryClient.invalidateQueries({ queryKey: ["chats"] });
-    },
-  });
-
-  const { mutate: getAiResponse, isPending } = useMutation<
-    ApiResponse,
-    Error,
-    string
-  >({
+  const { mutate, isPending } = useMutation<ApiResponse, Error, string>({
     mutationFn: aiQueryMutationFn,
   });
 
@@ -141,53 +134,72 @@ const ChatWidget = ({ isOpen, onClose, projectId }: ChatWidgetProps) => {
   ) => {
     let i = 0;
     const typingInterval = setInterval(() => {
-      setTypingMessage({
-        id: messageId,
-        content: fullText.substring(0, i),
-        role: "assistant",
-        timestamp: new Date(),
-        isTyping: true,
-      });
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id === messageId) {
+            return {
+              ...msg,
+              content: fullText.substring(0, i),
+              isTyping: true,
+            };
+          }
+          return msg;
+        })
+      );
 
       i++;
       if (i > fullText.length) {
         clearInterval(typingInterval);
-        setTypingMessage(null);
-        // Add the final message to the chat
-        addMessage({
-          chatId: activeChat!,
-          content: fullText,
-          role: "assistant",
-        });
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.id === messageId) {
+              return {
+                ...msg,
+                isTyping: false,
+                sources: sources?.map((source) => ({
+                  text: source.text,
+                  id: source.id,
+                  score: source.score,
+                })),
+              };
+            }
+            return msg;
+          })
+        );
       }
     }, 20);
   };
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = (values: FormValues) => {
     if (isPending) return;
     setShowSuggestions(false);
 
-    // Create a new chat if none is active
-    if (!activeChat) {
-      createChat(`Project ${projectId || "New"} Chat`);
-      return;
-    }
-
-    // Add user message to chat
-    addMessage({
-      chatId: activeChat,
+    const userMessage: Message = {
+      id: Date.now().toString(),
       content: values.query,
       role: "user",
-    });
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
 
     const tempAiMessageId = Date.now().toString() + "-temp";
-    
-    getAiResponse(values.query, {
+    const tempAiMessage: Message = {
+      id: tempAiMessageId,
+      content: "",
+      role: "assistant",
+      timestamp: new Date(),
+      isTyping: true,
+    };
+    setMessages((prev) => [...prev, tempAiMessage]);
+
+    mutate(values.query, {
       onSuccess: (data) => {
         typeMessage(tempAiMessageId, data.answer, data.sources);
         form.reset();
       },
       onError: (error) => {
+        setMessages((prev) => prev.filter((msg) => msg.id !== tempAiMessageId));
         toast({
           title: "Error",
           description: error.message,
@@ -276,7 +288,9 @@ const ChatWidget = ({ isOpen, onClose, projectId }: ChatWidgetProps) => {
         </div>
 
         {/* Chat History List */}
-        {showChatHistory ? (
+        {chatsIsLoading ? (
+          <Loader className="h-4 w-4 animate-spin" />
+        ) : showChatHistory ? (
           <div className="flex-1 overflow-y-auto p-2">
             <div className="space-y-1">
               {chatsData?.data.chats.map((chat) => (
@@ -285,13 +299,14 @@ const ChatWidget = ({ isOpen, onClose, projectId }: ChatWidgetProps) => {
                   className={cn(
                     "flex items-center justify-between p-3 rounded-lg cursor-pointer",
                     "hover:bg-gray-100 dark:hover:bg-zinc-700/50",
-                    activeChat === chat._id
+                    activeChatData?.data._id === chat._id
                       ? "bg-gray-200 dark:bg-zinc-700"
                       : ""
                   )}
                   onClick={() => {
                     setActiveChat(chat._id);
                     setShowChatHistory(false);
+                    // In a real app, you would load the chat messages here
                   }}
                 >
                   <div className="flex-1 min-w-0">
@@ -307,20 +322,13 @@ const ChatWidget = ({ isOpen, onClose, projectId }: ChatWidgetProps) => {
                     {formatDate(new Date(chat.updatedAt))}
                   </div>
                 </div>
-              ))}
+              )) || "No Chats Yet"}
             </div>
           </div>
         ) : (
           <>
             {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-3 space-y-3">
-              {messages.length === 0 && !activeChat && (
-                <div className="flex justify-center items-center h-full">
-                  <div className="text-center text-gray-500 dark:text-gray-400">
-                    <p>Start a new conversation</p>
-                  </div>
-                </div>
-              )}
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -378,7 +386,7 @@ const ChatWidget = ({ isOpen, onClose, projectId }: ChatWidgetProps) => {
                                 >
                                   <FileText className="h-3 w-3 opacity-70" />
                                   <span className="text-xs text-gray-700 dark:text-gray-300">
-                                    {source.title}
+                                    {source.text}
                                   </span>
                                   {source.score && (
                                     <span className="text-xs text-gray-500 ml-1">
@@ -391,7 +399,10 @@ const ChatWidget = ({ isOpen, onClose, projectId }: ChatWidgetProps) => {
                           </div>
                         )}
                         <p className="text-xs mt-1 text-right opacity-70">
-                          {formatTime(message.timestamp)}
+                          {message.timestamp.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
                       </>
                     )}
@@ -402,7 +413,7 @@ const ChatWidget = ({ isOpen, onClose, projectId }: ChatWidgetProps) => {
             </div>
 
             {/* Suggested Queries */}
-            {showSuggestions && messages.length === 0 && (
+            {showSuggestions && (
               <div className="px-2 pb-1 border-t border-gray-200 dark:border-zinc-700">
                 <div className="flex overflow-x-auto gap-1.5 py-2 scrollbar-hide">
                   {QUICK_QUESTIONS.map((q, i) => (

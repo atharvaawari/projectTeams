@@ -281,8 +281,9 @@ export const addMessageToChatMutationFn = async (
   data: {
     content: string;
     role: string;
+    sources: []
   },
-  chatId: string
+  chatId: string,
 ) => {
   const response = await API.post(`chats/chat/${chatId}/message`, { data });
   return response.data;
