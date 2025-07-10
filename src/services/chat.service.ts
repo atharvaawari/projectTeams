@@ -71,6 +71,8 @@ export const getChatByIdService = async (chatId: string, userId: string) => {
     throw new NotFoundException("Chat not found");
   }
 
+  console.log("chat", chat);
+
   return { chat };
 };
 

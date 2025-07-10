@@ -6,10 +6,10 @@ import { getAiResponseService } from "../services/ai.service";
 
 export const getAiResponseController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { query } = req.body;
+    const { query, chatId } = req.body;
     const userId = req.user?._id;
 
-    const result = await getAiResponseService(query, userId);
+    const result = await getAiResponseService(query, chatId, userId);
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Query handled Successfully",

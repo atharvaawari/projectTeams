@@ -24,6 +24,7 @@ import {
   ProjectByIdPayloadType,
   ProjectResponseType,
   registerType,
+  Source,
   WorkspaceByIdResponseType,
 } from "@/types/api.type";
 
@@ -281,7 +282,7 @@ export const addMessageToChatMutationFn = async (
   data: {
     content: string;
     role: string;
-    sources: []
+    sources?: Source[]
   },
   chatId: string,
 ) => {

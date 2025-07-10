@@ -2,7 +2,7 @@ import { X, Send, Loader, FileText, Sparkles, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   aiQueryMutationFn,
   getAllChatsQueryFn,
