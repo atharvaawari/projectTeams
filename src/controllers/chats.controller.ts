@@ -5,7 +5,7 @@ import {
   addMessageToChatService,
   createChatService,
   getChatByIdService,
-  getUserChatsSerive,
+  getUserChatsService,
 } from "../services/chat.service";
 
 interface CreateChatRequest extends Request {
@@ -48,7 +48,7 @@ export const getUserChatsController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
 
-    const userChats = await getUserChatsSerive(userId);
+    const userChats = await getUserChatsService(userId);
 
     return res.status(HTTPSTATUS.OK).json({
       message: "chats fetched successfully",
@@ -78,12 +78,11 @@ export const addMessageController = asyncHandler(
     const userId = req.user?._id;
 
     // Add user message
-    const { chat } = await addMessageToChatService(
+    const { message } = await addMessageToChatService(
       chatId,
       userId,
-      role,
       content,
-      sources
+      "user",
     );
 
     // --- Optional: Call AI service here and append response ---
@@ -92,7 +91,7 @@ export const addMessageController = asyncHandler(
 
     res.status(HTTPSTATUS.OK).json({
       message: "Message added successfully",
-      data: chat.messages,
+      data: message,
     });
   }
 );

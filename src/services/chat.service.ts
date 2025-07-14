@@ -4,6 +4,7 @@ import { NotFoundException } from "../utils/appError";
 import UserModel from "../models/user.model";
 import WorkspaceModel from "../models/workspace.model";
 import ChatModel from "../models/chat.model";
+import { MessageDocument, MessageModel } from "../models/message.model";
 
 
 //Create chat service
@@ -44,63 +45,130 @@ export const createChatService = async (
 };
 
 //Get user chats service
-export const getUserChatsSerive = async (userId: string) => {
+export const getUserChatsService = async (userId: string) => {
+  if (!userId) throw new NotFoundException("userId not found!");
 
-  if(!userId) throw new NotFoundException("userId not found!");
+  // Find all chats for the user
+  const chats = await ChatModel.find({ user: userId }).lean();
 
-  const chats = await ChatModel.find({ user: userId })
-    .sort({ updatedAt: -1 })
-    .populate("workspace", "name")
-    .populate("project", "title");
+  // Get all chat IDs
+  const chatIds = chats.map((chat) => chat._id);
 
-    return { chats};
+  // Find all messages for these chats, sorted by createdAt (oldest first)
+  const messages = await MessageModel.find({ chat: { $in: chatIds } })
+    .sort({ createdAt: 1 })
+    .lean();
+
+  // Group messages by chat ID
+  const messagesByChat = messages.reduce((acc, message) => {
+    const chatId = message.chat.toString();
+    if (!acc[chatId]) {
+      acc[chatId] = [];
+    }
+    acc[chatId].push(message);
+    return acc;
+  }, {} as Record<string, MessageDocument[]>);
+
+  // Combine chats with their messages
+  const chatsWithMessages = chats.map((chat) => ({
+    ...chat,
+    messages: messagesByChat[chat._id.toString()] || [],
+  }));
+
+  return { chats: chatsWithMessages };
 };
 
 //Get chat by Id
 export const getChatByIdService = async (chatId: string, userId: string) => {
-
-  if(!chatId) throw new NotFoundException("chatId not found");
+  if (!chatId) throw new NotFoundException("chatId not found");
 
   const chat = await ChatModel.findOne({
     _id: chatId,
-    user: userId
+    user: userId,
   })
-    .populate("project", "title");
+    .populate("project", "title")
+    .lean();
 
   if (!chat) {
     throw new NotFoundException("Chat not found");
   }
 
-  console.log("chat", chat);
+  const messages = await MessageModel.find({ chat: chatId })
+    .sort({ createdAt: 1 })
+    .lean();
 
-  return { chat };
+  return {
+    chat: {
+      ...chat,
+      messages,
+    },
+  };
 };
 
 //Add message to Chat
 export const addMessageToChatService = async (
   chatId: string,
   userId: string,
-  role: string,
   content: string,
-  sources?: { title: string; url: string; score?: number }[] // Optional sources for AI responses
+  role: "user" | "assistant",
+  sources?: {
+    title: string;
+    url: string;
+    score?: number;
+  }[]
 ) => {
+  // Verify the chat exists and belongs to the user
 
-  if (!chatId) throw new NotFoundException("chatId not found");
+  // console.log("chatId", chatId, "user", userId);
+  const chat = await ChatModel.findOne({ _id: chatId, user: userId });
 
-  const chat = await ChatModel.findOneAndUpdate(
-    { _id: chatId, user: userId }, // Ensure chat belongs to user
-    { 
-      $push: { 
-        messages: { 
-          role, 
-          content, 
-          ...(sources && { sources }) // Conditionally add sources
-        } 
-      }
-    },
-    { new: true }
-  ).populate("project", "title");
+  if (!chat) {
+    throw new NotFoundException("Chat not found or unauthorized");
+  }
 
-  if (!chat) throw new NotFoundException("Chat not found");
-  return { chat };
+  // Create and save the message
+  const message = await MessageModel.create({
+    chat: chatId,
+    content,
+    role,
+    sources,
+  });
+
+  return { message };
 };
+
+// export const addMessageToChatService = async (
+//   chatId: string,
+//     userId: string,
+//   content: string,
+//   role: string,
+//   sources?: [] // Optional sources for AI responses
+// ) => {
+//   if (!chatId) throw new NotFoundException("chatId not found");
+
+//   const message = await MessageModel.create({
+//     chat: chatId,
+//     content: content,
+//     role: role,
+//     sources,
+//   });
+
+//   return { message };
+
+//   // const chat = await ChatModel.findOneAndUpdate(
+//   //   { _id: chatId, user: userId }, // Ensure chat belongs to user
+//   //   {
+//   //     $push: {
+//   //       messages: {
+//   //         role,
+//   //         content,
+//   //         ...(sources && { sources }), // Conditionally add sources
+//   //       },
+//   //     },
+//   //   },
+//   //   { new: true }
+//   // ).populate("project", "title");
+
+//   // if (!chat) throw new NotFoundException("Chat not found");
+//   // return { chat };
+// };
