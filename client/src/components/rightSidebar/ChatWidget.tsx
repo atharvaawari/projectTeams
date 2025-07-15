@@ -12,10 +12,6 @@ import React, { useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChatType, message, Source } from "@/types/api.type";
 
-// type ApiResponse = {
-//   answer: string;
-//   sources?: Source[];
-// };
 
 type ChatWidgetProps = {
   isOpen: boolean;

@@ -113,11 +113,7 @@ const ChatWidget = ({ isOpen, onClose, projectId }: ChatWidgetProps) => {
     },
   });
 
-  const { mutate: getAiResponse, isPending } = useMutation<
-    ApiResponse,
-    Error,
-    string
-  >({
+  const { mutate: getAiResponse, isPending } = useMutation({
     mutationFn: aiQueryMutationFn,
   });
 
@@ -160,20 +156,19 @@ const ChatWidget = ({ isOpen, onClose, projectId }: ChatWidgetProps) => {
   const onSubmit = async (values: FormValues) => {
     if (isPending) return;
     setShowSuggestions(false);
-
-    try {
+    
       let currentChatId = activeChat;
 
       // Create a new chat if none is active
       if (!currentChatId) {
-        const { data: newChat }: any = createChat(
+        const newChat = await createChatMutationFn(
           `Project ${projectId || "New"} Chat`
         );
         currentChatId = newChat._id;
         setActiveChat(currentChatId);
       }
 
-      // Add user message to chat
+      // // Add user message to chat
       // addMessage({
       //   chatId: currentChatId,
       //   content: values.query,
@@ -181,27 +176,25 @@ const ChatWidget = ({ isOpen, onClose, projectId }: ChatWidgetProps) => {
       // });
 
       const tempAiMessageId = Date.now().toString() + "-temp";
-
-      getAiResponse(values.query, {
-        onSuccess: (data) => {
-          typeMessage(tempAiMessageId, data.answer, data.sources);
-          form.reset();
-        },
-        onError: (error) => {
-          toast({
-            title: "Error",
-            description: error.message,
-            variant: "destructive",
-          });
-        },
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to process your message",
-        variant: "destructive",
-      });
-    }
+      console.log("tempAiMessageId", tempAiMessageId);
+      // Call AI with both query and chatId
+      getAiResponse(
+        { query: values.query, chatId: currentChatId },
+        {
+          onSuccess: (data) => {
+            typeMessage(tempAiMessageId, data.answer, data.sources);
+            form.reset();
+          },
+          onError: (error) => {
+            toast({
+              title: "Error",
+              description: error.message,
+              variant: "destructive",
+            });
+          },
+        }
+      );
+   
   };
 
   useEffect(() => {
