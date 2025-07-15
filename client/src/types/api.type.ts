@@ -291,10 +291,11 @@ export type message = {
   content: string;
   role: string;
   _id: string;
-  timestamp: string;
-  sources: Source[];
+  createdAt: string;
+  updatedAt: string;
+  sources?: Source[];
+  isTyping?: boolean
 };
-
 
 export type ChatType = {
   _id: string;

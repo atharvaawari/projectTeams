@@ -264,8 +264,12 @@ export const deleteTaskMutationFn = async ({
 
 //*******AI********************************
 
-export const aiQueryMutationFn = async (query: string) => {
-  const response = await API.post(`/ai/query`, { query });
+export const aiQueryMutationFn = async ({
+  query,
+  chatId,
+}: { query: string; chatId: string}) => {
+  console.log("data", query, chatId);
+  const response = await API.post(`/ai/query`, {query, chatId});
   return response.data.data;
 };
 
@@ -282,9 +286,9 @@ export const addMessageToChatMutationFn = async (
   data: {
     content: string;
     role: string;
-    sources?: Source[]
+    sources?: Source[];
   },
-  chatId: string,
+  chatId: string
 ) => {
   const response = await API.post(`chats/chat/${chatId}/message`, { data });
   return response.data;
