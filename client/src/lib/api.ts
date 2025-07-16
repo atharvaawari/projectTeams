@@ -268,7 +268,6 @@ export const aiQueryMutationFn = async ({
   query,
   chatId,
 }: { query: string; chatId: string}) => {
-  console.log("data", query, chatId);
   const response = await API.post(`/ai/query`, {query, chatId});
   return response.data.data;
 };

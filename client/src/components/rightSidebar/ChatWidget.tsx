@@ -12,7 +12,6 @@ import React, { useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChatType, message, Source } from "@/types/api.type";
 
-
 type ChatWidgetProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -56,16 +55,55 @@ const ChatWidget = ({ isOpen, onClose }: ChatWidgetProps) => {
 
   const allChats = allChatsData?.data.chats || [];
 
+  const TypingMessage = ({
+    content,
+    isActive,
+  }: {
+    content: string;
+    isActive: boolean;
+  }) => {
+    const [displayText, setDisplayText] = useState("");
+
+    React.useEffect(() => {
+      if (!isActive) {
+        setDisplayText(content); // Show full content when not active
+        return;
+      }
+
+      setDisplayText(""); // Reset when new content comes in
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < content.length) {
+          setDisplayText(content.substring(0, i + 1));
+          i++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 20);
+
+      return () => clearInterval(interval);
+    }, [content, isActive]);
+
+    return <p>{displayText || "..."}</p>;
+  };
+
   React.useEffect(() => {
     if (!activeChat && allChats.length) {
       setActiveChat(getMostRecentChat(allChats));
     }
   }, [allChats]);
 
+  React.useEffect(() => {
+    scrollToBottom();
+  }, [activeChat?.messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const { mutate, isPending } = useMutation({
     mutationFn: aiQueryMutationFn,
     onSuccess: (data: { content: string; sources?: Source[] }) => {
-      console.log("data", data);
       setActiveChat((prev) => {
         if (!prev) return prev;
         return {
@@ -75,7 +113,7 @@ const ChatWidget = ({ isOpen, onClose }: ChatWidgetProps) => {
               ? {
                   ...msg,
                   content: data.content,
-                  isTyping: false,
+                  isTyping: true,
                   updatedAt: new Date().toISOString(),
                   sources: data.sources || [],
                 }
@@ -83,6 +121,23 @@ const ChatWidget = ({ isOpen, onClose }: ChatWidgetProps) => {
           ),
         };
       });
+      // After a short delay, mark typing as complete
+      setTimeout(() => {
+        setActiveChat((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            messages: prev.messages.map((msg) =>
+              msg.isTyping
+                ? {
+                    ...msg,
+                    isTyping: false,
+                  }
+                : msg
+            ),
+          };
+        });
+      }, data.content.length * 20 + 500); // Match animation duration
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to fetch response." });
@@ -243,7 +298,10 @@ const ChatWidget = ({ isOpen, onClose }: ChatWidgetProps) => {
                     >
                       {message.isTyping ? (
                         <>
-                          <p>{message.content}</p>
+                          <TypingMessage
+                            content={message.content || "Thinking..."}
+                            isActive={message.isTyping}
+                          />
                           {!message.content && (
                             <div className="flex space-x-1">
                               <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></div>
@@ -309,7 +367,7 @@ const ChatWidget = ({ isOpen, onClose }: ChatWidgetProps) => {
                       size="sm"
                       className="text-xs h-7 whitespace-nowrap bg-white/50 dark:bg-zinc-700/50 hover:bg-white dark:hover:bg-zinc-600"
                       onClick={() => {
-                        // form.setValue("query", q.text);
+                        form.setValue("query", q.text);
                       }}
                     >
                       {q.icon}

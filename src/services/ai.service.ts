@@ -27,8 +27,7 @@ interface Source {
 interface AIResponse {
   content: string;
   role: string;
-  sources?: Source[];
-  suggestedActions?: string[];
+  sources: Source[];
 }
 
 export const getAiResponseService = async (
@@ -57,63 +56,58 @@ export const getAiResponseService = async (
   //   { new: true }
   // ).populate("project", "title");
 
+  // Initialize LangChain's ChatOpenAI
+  const model = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
+    temperature: 0.7,
+    maxTokens: 1024,
+    maxRetries: 2,
+  });
 
-  // // Initialize LangChain's ChatOpenAI
-  // const model = new ChatOpenAI({
-  //   modelName: "gpt-3.5-turbo",
-  //   temperature: 0.7,
-  //   maxTokens: 1024,
-  //   maxRetries: 2,
-  // });
+  // Search all relevant collections
+  const results = (await searchVectorDB(
+    query,
+    collection,
+    userId
+  )) as SearchResult[];
 
-  // // Search all relevant collections
-  // const results = (await searchVectorDB(
-  //   query,
-  //   collection,
-  //   userId
-  // )) as SearchResult[];
+  // Combine and sort results by score
+  const combinedResults = results
+    .flat()
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5); // Take top 5 overall
 
-  // // Combine and sort results by score
-  // const combinedResults = results
-  //   .flat()
-  //   .sort((a, b) => b.score - a.score)
-  //   .slice(0, 5); // Take top 5 overall
+  // Prepare context for LLM
+  const context = combinedResults
+    .map(
+      (result) =>
+        `From ${result.payload?.mongoId} (${result.score.toFixed(2)}): ${
+          result.text
+        }`
+    )
+    .join("\n\n");
 
-  // // Prepare context for LLM
-  // const context = combinedResults
-  //   .map(
-  //     (result) =>
-  //       `From ${result.payload?.mongoId} (${result.score.toFixed(2)}): ${
-  //         result.text
-  //       }`
-  //   )
-  //   .join("\n\n");
+  // Call LLM with the context using LangChain
+  const response = await model.invoke([
+    new SystemMessage(
+      `You are a helpful project management assistant. Use the following context to answer the user's question.
+      If you don't know the answer, say so.
 
-  // // Call LLM with the context using LangChain
-  // const response = await model.invoke([
-  //   new SystemMessage(
-  //     `You are a helpful project management assistant. Use the following context to answer the user's question.
-  //     If you don't know the answer, say so.
-
-  //     Context:
-  //     ${context}`
-  //   ),
-  //   new HumanMessage(query),
-  // ]);
-
-  // const responseData: AIResponse = {
-  //   answer: response.content.toString(),
-  //   sources: combinedResults.map((result) => ({
-  //     id: result.payload?.mongoId,
-  //     collection: result.payload?.collection,
-  //     text: result.text,
-  //     score: result.score,
-  //   })),
-  // };
+      Context:
+      ${context}`
+    ),
+    new HumanMessage(query),
+  ]);
 
   const responseData: AIResponse = {
-    content: "Ai response on the query got it ",
-    role: "assistant",
+    content: response.content.toString(),
+    role: "assistance",
+    sources: combinedResults.map((result) => ({
+      id: result.payload?.mongoId,
+      collection: result.payload?.collection,
+      text: result.text,
+      score: result.score,
+    })),
   };
 
   // 3. Save assistant message
@@ -121,31 +115,13 @@ export const getAiResponseService = async (
     chatId,
     userId,
     responseData.content,
-    "assistant"
-    // sources.map(source => ({
-    //   title: source.id,
-    //   url: source.collection,
-    //   score: source.score
-    // }))
+    "assistant",
+    responseData.sources.map(source => ({
+      title: source.id,
+      url: source.text,
+      score: source.score
+    }))
   );
-
-  //Update message of ai assistance in chat
-  // const updatedassistanceChat = await ChatModel.findByIdAndUpdate(chatId, {
-  //   $push: {
-  //     messages: {
-  //       content: "Ai response on the query got it ",
-  //       role: "assistant",
-  //       timestamp: new Date(),
-  //       // sources: combinedResults.map((result) => ({
-  //       //   id: result.payload?.mongoId,
-  //       //   text: result.text,
-  //       //   score: result.score,
-  //       // })),
-  //     },
-  //   },
-  // });
-
-  // console.log("updatedassistanceChat", updatedassistanceChat);
 
   return responseData;
 };
