@@ -21,8 +21,6 @@ import taskRoutes from "./routes/task.route";
 import aiRouter from "./routes/ai.route";
 import {
   initQdrantCollection,
-  qdrantClient,
-  resetCollection,
 } from "./config/qdrant";
 import chatRouter from "./routes/chat.route";
 
@@ -36,9 +34,10 @@ app.use(
     name: "session",
     keys: [config.SESSION_SECRET],
     maxAge: 24 * 60 * 60 * 1000,
-    secure: config.NODE_ENV === "production",
+    secure: config.NODE_ENV === "production", //"production",
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "none",
+    domain: config.NODE_ENV === "production" ? '.atharvaawari.in' : undefined,
   })
 );
 
@@ -83,37 +82,6 @@ connectDatabase().then(() => {
 
 async function createQdrantDBcollections() {
   initQdrantCollection("project_teams_embeddings");
-
-  // await qdrantClient.createPayloadIndex("project_teams_embeddings", {
-  //   field_name: "ownerId",
-  //   field_schema: "keyword",
-  // });
-
-  // initQdrantCollection("workspace_embeddings");
-  // initQdrantCollection("task_embeddings");
-  // initQdrantCollection("project_embeddings");
-  // initQdrantCollection("member_embeddings");
-
-  // await qdrantClient.createPayloadIndex("workspace_embeddings", {
-  //   field_name: "ownerId",
-  //   field_schema: "keyword",
-  //   wait: true,
-  // });
-  // await qdrantClient.createPayloadIndex("task_embeddings", {
-  //   field_name: "ownerId",
-  //   field_schema: "keyword",
-  //   wait: true,
-  // });
-  // await qdrantClient.createPayloadIndex("project_embeddings", {
-  //   field_name: "ownerId",
-  //   field_schema: "keyword",
-  //   wait: true,
-  // });
-  // await qdrantClient.createPayloadIndex("member_embeddings", {
-  //   field_name: "ownerId",
-  //   field_schema: "keyword",
-  //   wait: true,
-  // });
 }
 
 createQdrantDBcollections();

@@ -34,7 +34,7 @@ export default function EditProjectForm(props: {
   const workspaceId = useWorkspaceId();
   const queryClient = useQueryClient();
 
-  const projectId = project?.project?._id as string;
+  const projectId = project?._id as string;
 
   const {mutate, isPending } = useMutation({
     mutationFn: editProjectMutationFn,
@@ -59,9 +59,9 @@ export default function EditProjectForm(props: {
 
   useEffect(() => {
     if (project) {
-      setEmoji(project.project.emoji);
-      form.setValue("name", project.project.name);
-      form.setValue("description", project.project.description);
+      setEmoji(project.emoji);
+      form.setValue("name", project.name);
+      form.setValue("description", project.description);
     }
   }, [form, project]);
 
@@ -72,7 +72,6 @@ export default function EditProjectForm(props: {
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     if(isPending) return;
 
-    console.log("projectId", projectId);
     const payload = {
       projectId,
       workspaceId,

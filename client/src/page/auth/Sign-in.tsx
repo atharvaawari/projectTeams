@@ -25,6 +25,7 @@ import { useMutation } from "@tanstack/react-query";
 import { loginMutationFn } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { Loader } from "lucide-react";
+import { useStore } from "@/store/store";
 
 const SignIn = () => {
 
@@ -32,6 +33,8 @@ const SignIn = () => {
 
   const [searchParams] = useSearchParams();
   const returnUrl = searchParams.get('returnUrl');
+
+  const { setAccessToken } = useStore();
 
   const { mutate, isPending} = useMutation({
     mutationFn: loginMutationFn,
@@ -60,9 +63,12 @@ const SignIn = () => {
 
     mutate(values, {
       onSuccess: (data)=> {
+        const accessToken = data.access_token;
         const user = data.user;
+
+        setAccessToken(accessToken);
+
         const decodedUrl = returnUrl ? decodeURIComponent(returnUrl) : null;
-        
         navigate(decodedUrl || `/workspace/${user.currentWorkSpace}`); //currentWorkSpace only currentWorkSpace syntaxt is this
       },
       onError: (error: any)=>{

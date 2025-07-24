@@ -50,7 +50,7 @@ const ProjectHeader = () => {
           {renderContent()}
         </h2>
         <PermissionsGuard requiredPermission={Permissions.EDIT_PROJECT}>
-        <EditProjectDialog project={{project} as any} />
+        <EditProjectDialog project={project} />
         </PermissionsGuard>
       </div>
       <CreateTaskDialog projectId={projectId} />
